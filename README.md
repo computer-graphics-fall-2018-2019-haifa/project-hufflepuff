@@ -1,7 +1,7 @@
 # Computer Graphics 203.3710, Winter 2018/2019
 ## Students Team data
 
-Name: Ben Shukrun
+Name: Ben Shukrun  
 Student Number: 204097216
 
 Name: 'Your real name'  
