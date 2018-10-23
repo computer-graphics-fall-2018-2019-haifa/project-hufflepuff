@@ -4,8 +4,8 @@
 Name: Ben Shukrun  
 Student Number: 204097216
 
-Name: 'Your real name'  
-Student Number: 'Your student number'
+Name: Mor Aghion   
+Student Number: 308520121
 
 ### Lecturer
 *Roi Poranne*
