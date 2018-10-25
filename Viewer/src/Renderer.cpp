@@ -6,6 +6,7 @@
 #include <imgui/imgui.h>
 #include <vector>
 #include <cmath>
+#include <math.h>
 
 #define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
 
@@ -72,6 +73,50 @@ void Renderer::SetViewport(int viewportWidth, int viewportHeight, int viewportX,
 	createOpenGLBuffer();
 }
 
+void Renderer::Bresenham(float x1, float y1, float x2, float y2, const glm::vec3& color) {
+	// Bresenham's line algorithm
+	const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
+	if (steep)
+	{
+		std::swap(x1, y1);
+		std::swap(x2, y2);
+	}
+
+	if (x1 > x2)
+	{
+		std::swap(x1, x2);
+		std::swap(y1, y2);
+	}
+
+	const float dx = x2 - x1;
+	const float dy = fabs(y2 - y1);
+
+	float error = dx / 2.0f;
+	const int ystep = (y1 < y2) ? 1 : -1;
+	int y = (int)y1;
+
+	const int maxX = (int)x2;
+
+	for (int x = (int)x1; x<maxX; x++)
+	{
+		if (steep)
+		{
+			putPixel(y, x, color);
+		}
+		else
+		{
+			putPixel(x, y, color);
+		}
+
+		error -= dy;
+		if (error < 0)
+		{
+			y += ystep;
+			error += dx;
+		}
+	}
+}
+
 void Renderer::Render(const Scene& scene)
 {
 	//#############################################
@@ -79,8 +124,13 @@ void Renderer::Render(const Scene& scene)
 	//## Here you should render the scene.       ##
 	//#############################################
 
+	
+	Bresenham(-10, -10, 140, 100, glm::vec3(0, 0, 0));
+	Bresenham(-10, -10, 120, 140, glm::vec3(0, 0, 0));
+	Bresenham(140, 100, 120, 140, glm::vec3(0, 0, 0));
+
 	// Draw a chess board in the middle of the screen
-	for (int i = 100; i < viewportWidth - 100; i++)
+	/*for (int i = 100; i < viewportWidth - 100; i++)
 	{
 		for (int j = 100; j < viewportHeight - 100; j++)
 		{
@@ -97,7 +147,7 @@ void Renderer::Render(const Scene& scene)
 				putPixel(i, j, glm::vec3(1, 0, 0));
 			}
 		}
-	}
+	}*/
 }
 
 //##############################
