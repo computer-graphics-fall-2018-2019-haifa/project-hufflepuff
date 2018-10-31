@@ -3,12 +3,18 @@
 #include "Renderer.h"
 #include "InitShader.h"
 #include "MeshModel.h"
+#include <iostream>
 #include <imgui/imgui.h>
 #include <vector>
 #include <cmath>
 #include <math.h>
 
 #define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
+
+typedef glm::vec3 vec3;
+
+void rotateHelper(vec3 &point, const float &theta);
+
 
 Renderer::Renderer(int viewportWidth, int viewportHeight, int viewportX, int viewportY) :
 	colorBuffer(nullptr),
@@ -73,9 +79,17 @@ void Renderer::SetViewport(int viewportWidth, int viewportHeight, int viewportX,
 	createOpenGLBuffer();
 }
 
-void Renderer::Bresenham(float x1, float y1, float x2, float y2, const glm::vec3& color) {
+void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& color) {
 	// Bresenham's line algorithm
+	float x1 = point1.x,
+		y1 = point1.y,
+		z1 = point1.z;
+	float x2 = point2.x,
+		y2 = point2.y,
+		z2 = point2.z;
+
 	const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
+
 	if (steep)
 	{
 		std::swap(x1, y1);
@@ -117,17 +131,61 @@ void Renderer::Bresenham(float x1, float y1, float x2, float y2, const glm::vec3
 	}
 }
 
-void Renderer::Render(const Scene& scene)
+void Renderer::Render(const Scene& scene, const float& scale, const float& rotation, const float translate[2])
 {
 	//#############################################
 	//## You should override this implementation ##
 	//## Here you should render the scene.       ##
 	//#############################################
 
-	
-	Bresenham(-10, -10, 140, 100, glm::vec3(0, 0, 0));
-	Bresenham(-10, -10, 120, 140, glm::vec3(0, 0, 0));
-	Bresenham(140, 100, 120, 140, glm::vec3(0, 0, 0));
+	int x_add = (int)(viewportWidth / 2);
+	int y_add = (int)(viewportHeight / 2);
+
+	// draw axes
+	DrawLine(vec3(0, y_add, 0), vec3(viewportWidth, y_add, 0), vec3(1, 1, 0));
+	DrawLine(vec3(x_add, 0, 0), vec3(x_add, viewportHeight, 0), vec3(1, 1, 0));
+
+	int modelIndex = scene.GetActiveModelIndex();
+	std::vector<std::shared_ptr<MeshModel>> models = scene.GetModels();
+	if (models.empty()) return;
+	std::vector<Face> faces = (*models.at(modelIndex)).GetFaces();
+	std::vector<glm::vec3> vertices = (*models.at(modelIndex)).GetVertices();
+
+	for (Face& face : faces) {
+		int i = face.GetVertexIndex(0),
+			j = face.GetVertexIndex(1),
+			k = face.GetVertexIndex(2);
+		vec3
+			point1 = vertices[i - 1],
+			point2 = vertices[j - 1],
+			point3 = vertices[k - 1];
+
+		// scale
+		point1 *= vec3(scale, scale, 0);
+		point2 *= vec3(scale, scale, 0);
+		point3 *= vec3(scale, scale, 0);
+
+		// rotate
+		rotateHelper(point1, rotation);
+		rotateHelper(point2, rotation);
+		rotateHelper(point3, rotation);
+
+		// translate (move to fake 0,0)
+		float trans_x = translate[0],
+			trans_y = translate[1];
+		point1 += vec3(trans_x, trans_y, 0);
+		point2 += vec3(trans_x, trans_y, 0);
+		point3 += vec3(trans_x, trans_y, 0);
+
+		// translate (move to fake 0,0)
+		point1 += vec3(x_add, y_add, 0);
+		point2 += vec3(x_add, y_add, 0);
+		point3 += vec3(x_add, y_add, 0);
+
+		DrawLine(point1, point2, vec3(0, 0, 0));
+		DrawLine(point1, point3, vec3(0, 0, 0));
+		DrawLine(point2, point3, vec3(0, 0, 0));
+	}
 
 	// Draw a chess board in the middle of the screen
 	/*for (int i = 100; i < viewportWidth - 100; i++)
@@ -148,6 +206,18 @@ void Renderer::Render(const Scene& scene)
 			}
 		}
 	}*/
+}
+
+void rotateHelper(vec3 &point, const float &theta) {
+	glm::mat3x3 rotationMatrix;
+	const float pi = 3.14159265 / 180;
+	rotationMatrix[0][0] = cos(theta * pi);
+	rotationMatrix[0][1] = -sin(theta * pi);
+	rotationMatrix[1][0] = sin(theta * pi);
+	rotationMatrix[1][1] = cos(theta * pi);
+	rotationMatrix[2][2] = 1;
+
+	point = rotationMatrix * point;
 }
 
 //##############################

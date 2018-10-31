@@ -7,6 +7,8 @@
 #include <sstream>
 
 MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3>& vertices, const std::vector<glm::vec3>& normals, const std::string& modelName) :
+	vertices(vertices),
+	faces(faces),
 	modelName(modelName),
 	worldTransform(glm::mat4x4(1))
 {
@@ -41,4 +43,14 @@ const glm::vec4& MeshModel::GetColor() const
 const std::string& MeshModel::GetModelName()
 {
 	return modelName;
+}
+
+const std::vector<glm::vec3> MeshModel::GetVertices() const
+{
+	return vertices;
+}
+
+const std::vector<Face>& MeshModel::GetFaces() const
+{
+	return faces;
 }

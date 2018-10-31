@@ -14,6 +14,10 @@
 #include "Camera.h"
 #include "ImguiMenus.h"
 
+float scale = 1.0f;
+float rotation = 0.0f;
+float translationVector[2] = { 0.0, 0.0 };
+
 // Function declarations
 static void GlfwErrorCallback(int error, const char* description);
 GLFWwindow* SetupGlfwWindow(int w, int h, const char* window_name);
@@ -64,7 +68,7 @@ int main(int argc, char **argv)
 		StartFrame();
 
 		// Here we build the menus for the next frame. Feel free to pass more arguments to this function call
-		DrawImguiMenus(io, scene);
+		DrawImguiMenus(io, scene, scale, rotation, translationVector);
 
 		// Render the next frame
 		RenderFrame(window, scene, renderer, io);
@@ -139,7 +143,7 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 	renderer.ClearColorBuffer(GetClearColor());
 
 	// Render the scene
-	renderer.Render(scene);
+	renderer.Render(scene, scale, rotation, translationVector);
 
 	// Swap buffers
 	renderer.SwapBuffers();
