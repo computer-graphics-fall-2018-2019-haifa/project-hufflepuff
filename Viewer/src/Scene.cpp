@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "MeshModel.h"
 #include <string>
+#include <iostream>
 
 Scene::Scene() :
 	activeCameraIndex(0),
@@ -12,6 +13,7 @@ Scene::Scene() :
 void Scene::AddModel(const std::shared_ptr<MeshModel>& model)
 {
 	models.push_back(model);
+	activeModelIndex = models.size() - 1;
 }
 
 const int Scene::GetModelCount() const
@@ -59,4 +61,10 @@ const int Scene::GetActiveModelIndex() const
 
 std::vector<std::shared_ptr<MeshModel>> Scene::GetModels() const {
 	return models;
+}
+
+const Camera & Scene::GetActiveCamera() const
+{
+	int i = GetActiveCameraIndex();
+	return cameras.at(i);
 };

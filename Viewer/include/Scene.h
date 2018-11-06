@@ -37,4 +37,6 @@ public:
 
 	// Add more methods as needed...
 	std::vector<std::shared_ptr<MeshModel>> GetModels() const;
+
+	const Camera& GetActiveCamera() const;
 };
