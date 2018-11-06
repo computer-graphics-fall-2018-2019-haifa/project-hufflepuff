@@ -42,17 +42,17 @@ Face::~Face()
 
 }
 
-const int Face::GetVertexIndex(int index)
+const int Face::GetVertexIndex(int index) const
 {
 	return vertexIndices[index];
 }
 
-const int Face::GetNormalIndex(int index)
+const int Face::GetNormalIndex(int index) const
 {
 	return normalIndices[index];
 }
 
-const int Face::GetTextureIndex(int index)
+const int Face::GetTextureIndex(int index) const
 {
 	return textureIndices[index];
 }
