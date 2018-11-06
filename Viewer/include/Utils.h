@@ -19,6 +19,14 @@ public:
 	//	1. function that gets an angle, and returns a rotation matrix around a certian axis
 	//	2. function that gets a vector, and returns a translation matrix
 	//	3. anything else that may be useful in global scope
+	static glm::vec4 Vec4FromVec3(const glm::vec3& v, const float w = 1.0f);
+	static glm::vec3 Vec3FromVec4(const glm::vec4& v);
+
+	static glm::mat4 GetScaleMatrix(const glm::vec3 s);
+	static glm::mat4 GetTranslationMatrix(const glm::vec3 translationVector);
+	static glm::mat4 GetRotationMatrix(const glm::vec3 rotateVector);
+
+	static std::vector<glm::vec3> FaceToVertices(const Face& face, const std::vector<glm::vec3>& vertices);
 
 private:
 	static std::string GetFileName(const std::string& filePath);
