@@ -41,8 +41,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, float& scale, float& rotation, fl
 		//ImGui::Checkbox("Demo Window", &showDemoWindow);      // Edit bools storing our window open/close state
 		//ImGui::Checkbox("Another Window", &showAnotherWindow);
 
-		ImGui::SliderFloat("Scale", &scale, 1.0f, 1000.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-		ImGui::SliderFloat("Rotate", &rotation, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+		int index = scene.GetActiveModelIndex();
+		MeshModel m = *(scene.GetModels().at(index));
+
+		ImGui::SliderFloat("Scale",	&scale, 1.0f, 100.0f);            // Edit 1 float using a slider from 1.0f to 1000.0f
+		ImGui::SliderFloat("Rotate", &rotation, 0.0f, 360.0f);            // Edit 1 float using a slider from 0.0f to 360.0f
 
 		ImGui::InputFloat2("Translate", translation, 2);
 

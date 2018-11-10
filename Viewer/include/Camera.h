@@ -16,10 +16,11 @@ class Camera: MeshModel
 private:
 	glm::mat4x4 viewTransformation;
 	glm::mat4x4 projectionTransformation;
+	glm::mat4x4 orthographicTransformation;
 	float zoom;
 
 public:
-	Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up);
+	Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up, const MeshModel& m);
 	~Camera();
 
 	void SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up);
@@ -39,4 +40,7 @@ public:
 	void SetZoom(const float zoom);
 
 	// Add more methods/functionality as needed...
+	glm::mat4 GetViewTransformation();
+	glm::mat4 GetPersTransformation();
+	glm::mat4 GetOrthTransformation();
 };

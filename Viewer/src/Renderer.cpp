@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "InitShader.h"
 #include "MeshModel.h"
+#include "Utils.h"
 #include <iostream>
 #include <imgui/imgui.h>
 #include <vector>
@@ -13,7 +14,8 @@
 
 typedef glm::vec3 vec3;
 
-void rotateHelper(vec3 &point, const float &theta);
+vec3 rotateHelper(vec3 &point, const float &theta);
+vec3 scaleHelper(vec3& point, vec3& scale);
 
 
 Renderer::Renderer(int viewportWidth, int viewportHeight, int viewportX, int viewportY) :
@@ -81,12 +83,11 @@ void Renderer::SetViewport(int viewportWidth, int viewportHeight, int viewportX,
 
 void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& color) {
 	// Bresenham's line algorithm
-	float x1 = point1.x,
+	float
+		x1 = point1.x,
 		y1 = point1.y,
-		z1 = point1.z;
-	float x2 = point2.x,
-		y2 = point2.y,
-		z2 = point2.z;
+		x2 = point2.x,
+		y2 = point2.y;
 
 	const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
 
@@ -131,6 +132,15 @@ void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& colo
 	}
 }
 
+void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3& color) {
+	glm::vec3 p1 = vertices[0],
+		p2 = vertices[1],
+		p3 = vertices[2];
+	DrawLine(p1, p2, color);
+	DrawLine(p1, p3, color);
+	DrawLine(p2, p3, color);
+}
+
 void Renderer::Render(const Scene& scene, const float& scale, const float& rotation, const float translate[2])
 {
 	//#############################################
@@ -146,69 +156,48 @@ void Renderer::Render(const Scene& scene, const float& scale, const float& rotat
 	DrawLine(vec3(x_add, 0, 0), vec3(x_add, viewportHeight, 0), vec3(1, 1, 0));
 
 	int modelIndex = scene.GetActiveModelIndex();
+
+	Camera c = scene.GetActiveCamera();
+	glm::mat4 vtMat = c.GetViewTransformation();
+	glm::mat4 ptMat = c.GetPersTransformation();
+	glm::mat4 otMat = c.GetOrthTransformation();
+
 	std::vector<std::shared_ptr<MeshModel>> models = scene.GetModels();
 	if (models.empty()) return;
-	std::vector<Face> faces = (*models.at(modelIndex)).GetFaces();
-	std::vector<glm::vec3> vertices = (*models.at(modelIndex)).GetVertices();
+	MeshModel m = *models.at(modelIndex);
+	std::vector<Face> faces = m.GetFaces();
+	std::vector<glm::vec3> vertices = m.GetVertices();
+	std::vector<glm::vec3> normals = m.GetNormals();
+
+	float trans_x = translate[0],
+		trans_y = translate[1];
+	vec3 scaleVec3 = vec3(scale, scale, scale);
+	vec3 rotateVec3 = vec3(0, rotation, 0);
+	vec3 translationVec3 = vec3(trans_x, trans_y, 0);
+	vec3 centerVec3 = vec3(x_add, y_add, 0);
+	m.SetWorldTransformation(scaleVec3, rotateVec3, translationVec3);
+
+	glm::mat4 wtMat = m.GetWorldTransformation();
 
 	for (Face& face : faces) {
-		int i = face.GetVertexIndex(0),
-			j = face.GetVertexIndex(1),
-			k = face.GetVertexIndex(2);
-		vec3
-			point1 = vertices[i - 1],
-			point2 = vertices[j - 1],
-			point3 = vertices[k - 1];
+		std::vector<glm::vec3> triangle = Utils::FaceToVertices(face, vertices);
 
-		// scale
-		point1 *= vec3(scale, scale, 0);
-		point2 *= vec3(scale, scale, 0);
-		point3 *= vec3(scale, scale, 0);
-
-		// rotate
-		rotateHelper(point1, rotation);
-		rotateHelper(point2, rotation);
-		rotateHelper(point3, rotation);
-
-		// translate (move to fake 0,0)
-		float trans_x = translate[0],
-			trans_y = translate[1];
-		point1 += vec3(trans_x, trans_y, 0);
-		point2 += vec3(trans_x, trans_y, 0);
-		point3 += vec3(trans_x, trans_y, 0);
-
-		// translate (move to fake 0,0)
-		point1 += vec3(x_add, y_add, 0);
-		point2 += vec3(x_add, y_add, 0);
-		point3 += vec3(x_add, y_add, 0);
-
-		DrawLine(point1, point2, vec3(0, 0, 0));
-		DrawLine(point1, point3, vec3(0, 0, 0));
-		DrawLine(point2, point3, vec3(0, 0, 0));
-	}
-
-	// Draw a chess board in the middle of the screen
-	/*for (int i = 100; i < viewportWidth - 100; i++)
-	{
-		for (int j = 100; j < viewportHeight - 100; j++)
-		{
-			int mod_i = i / 50;
-			int mod_j = j / 50;
-
-			int odd = (mod_i + mod_j) % 2;
-			if (odd)
-			{
-				putPixel(i, j, glm::vec3(0, 1, 0));
-			}
-			else
-			{
-				putPixel(i, j, glm::vec3(1, 0, 0));
-			}
+		for (glm::vec3& point : triangle) {
+			glm::vec4 pointVec4 = Utils::Vec4FromVec3(point);
+			pointVec4 = ptMat * otMat * vtMat * wtMat * pointVec4;
+			point = Utils::Vec3FromVec4(pointVec4);
+			point += vec3(x_add, y_add, 0);
 		}
-	}*/
+		
+		DrawTriangle(triangle, glm::vec3(0, 0, 0));
+	}
 }
 
-void rotateHelper(vec3 &point, const float &theta) {
+vec3 scaleHelper(vec3& point, vec3& scale) {
+	return Utils::GetScaleMatrix(scale) * Utils::Vec4FromVec3(point);
+}
+
+vec3 rotateHelper(vec3& point, const float& theta) {
 	glm::mat3x3 rotationMatrix;
 	const float pi = 3.14159265 / 180;
 	rotationMatrix[0][0] = cos(theta * pi);
@@ -217,7 +206,7 @@ void rotateHelper(vec3 &point, const float &theta) {
 	rotationMatrix[1][1] = cos(theta * pi);
 	rotationMatrix[2][2] = 1;
 
-	point = rotationMatrix * point;
+	return rotationMatrix * point;
 }
 
 //##############################

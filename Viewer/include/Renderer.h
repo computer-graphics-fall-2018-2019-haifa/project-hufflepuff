@@ -38,8 +38,8 @@ public:
 	void SwapBuffers();
 	void ClearColorBuffer(const glm::vec3& color);
 	void SetViewport(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
-	//void Bresenham(float x1, float y1, float x2, float y2, const glm::vec3& color);
-	void DrawLine(const vec3& point1, const vec3& point2, const vec3& color);
 
 	// Add more methods/functionality as needed...
+	void DrawLine(const vec3& point1, const vec3& point2, const vec3& color);
+	void DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3 & color);
 };

@@ -9,10 +9,13 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include <iostream>
+#include <filesystem>
 #include "Renderer.h"
 #include "Scene.h"
 #include "Camera.h"
 #include "ImguiMenus.h"
+#include "Utils.h"
 
 float scale = 1.0f;
 float rotation = 0.0f;
@@ -54,6 +57,15 @@ int main(int argc, char **argv)
 	// Create the renderer and the scene
 	Renderer renderer = Renderer(frameBufferWidth, frameBufferHeight);
 	Scene scene = Scene();
+
+	//std::shared_ptr<Camera> c(new Camera(glm::vec3(1, 1, 0), glm::vec3(1, 1, 0), glm::vec3(1, 1, 0)));
+	MeshModel m = Utils::LoadMeshModel("C:\\Users\\bensh\\OneDrive\\Documents\\graphics\\hufflepuff_new\\project-hufflepuff\\Data\\camera.obj");
+	std::shared_ptr<MeshModel> s(&m);
+	scene.AddModel(s);
+	Camera c = Camera(glm::vec3(1, 0, 1), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), m);
+	//c.SetOrthographicProjection(5, 5, 1, 5);
+	scene.AddCamera(c);
+
 
 	// Setup ImGui
 	ImGuiIO& io = SetupDearImgui(window);
