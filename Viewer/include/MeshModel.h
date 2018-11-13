@@ -16,10 +16,19 @@ private:
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> normals;
 	glm::mat4x4 worldTransform;
-	glm::vec4 color;
 	std::string modelName;
+	glm::vec4 mins;
+	glm::vec4 maxs;
 
 public:
+	bool showVertexNormals;
+	bool showFacesNormals;
+	bool showBoundingBox;
+	glm::vec3 scale;
+	glm::vec3 rotation;
+	glm::vec3 translation;
+	glm::vec4 color;
+
 	MeshModel() {};
 	MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3>& vertices, const std::vector<glm::vec3>& normals, const std::string& modelName = "");
 	MeshModel(const MeshModel& other);
@@ -33,9 +42,21 @@ public:
 	void SetColor(const glm::vec4& color);
 
 	const std::string& GetModelName();
+	void SetModelName(std::string name);
 
 	// Add more methods/functionality as needed...
 	const std::vector<glm::vec3> GetVertices() const;
 	const std::vector<glm::vec3>& GetNormals() const;
 	const std::vector<Face>& GetFaces() const;
+
+	const glm::vec4 GetMin() const;
+	const glm::vec4 GetMax() const;
+
+	const glm::vec3 GetScale() const;
+	const glm::vec3 GetRotation() const;
+	const glm::vec3 GetTranslation() const;
+	void ToggleShowVertexNormals(bool val);
+	void SetScale(glm::vec3 _s);
+	void SetRotation(glm::vec3 _r);
+	void SetTranslation(glm::vec3 _t);
 };

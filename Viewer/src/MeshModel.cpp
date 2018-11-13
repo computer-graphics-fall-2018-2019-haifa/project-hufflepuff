@@ -11,8 +11,27 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 	normals(normals),
 	faces(faces),
 	modelName(modelName),
-	worldTransform(glm::mat4x4(1))
+	worldTransform(glm::mat4x4(1)),
+	mins(glm::vec4(INFINITY, INFINITY, INFINITY, 1)),
+	maxs(glm::vec4(-INFINITY, -INFINITY, -INFINITY, 1)),
+	scale({ 1,1,0 }),
+	rotation({ 0,0,0 }),
+	translation({ 0,0,0 }),
+	showFacesNormals(false),
+	showVertexNormals(false),
+	showBoundingBox(false)
 {
+	for (glm::vec3 vertex : vertices)
+	{
+		mins.x = std::fmin(mins.x, vertex.x);
+		maxs.x = std::fmax(maxs.x, vertex.x);
+		mins.y = std::fmin(mins.y, vertex.y);
+		maxs.y = std::fmax(maxs.y, vertex.y);
+		mins.z = std::fmin(mins.z, vertex.z);
+		maxs.z = std::fmax(maxs.z, vertex.z);
+	}
+
+	color = Utils::GenerateRandomColor();
 
 }
 
@@ -21,9 +40,17 @@ MeshModel::MeshModel(const MeshModel& other):
 	faces(other.faces),
 	normals(other.normals),
 	modelName(other.modelName),
-	worldTransform(other.worldTransform)
+	worldTransform(other.worldTransform),
+	maxs(other.maxs),
+	mins(other.mins),
+	scale(other.scale),
+	rotation(other.rotation),
+	translation(other.translation),
+	showFacesNormals(other.showFacesNormals),
+	showVertexNormals(other.showVertexNormals),
+	showBoundingBox(other.showBoundingBox),
+	color(other.color)
 {
-
 }
 
 MeshModel::~MeshModel()
@@ -38,10 +65,7 @@ void MeshModel::SetWorldTransformation(const glm::mat4x4& worldTransform)
 
 void MeshModel::SetWorldTransformation(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate)
 {
-	glm::mat4 scaleMat = Utils::GetScaleMatrix(scale);
-	glm::mat4 rotateMat = Utils::GetRotationMatrix(rotate);
-	glm::mat4 translateMat = Utils::GetTranslationMatrix(translate);
-	this->worldTransform = translateMat * rotateMat * scaleMat;
+	this->worldTransform = Utils::GetTransformationMatrix(scale, rotate, translate);
 }
 
 const glm::mat4x4& MeshModel::GetWorldTransformation() const
@@ -61,7 +85,12 @@ const glm::vec4& MeshModel::GetColor() const
 
 const std::string& MeshModel::GetModelName()
 {
-	return modelName;
+	return this->modelName;
+}
+
+void MeshModel::SetModelName(std::string name)
+{
+	this->modelName = name;
 }
 
 const std::vector<glm::vec3> MeshModel::GetVertices() const
@@ -74,8 +103,46 @@ const std::vector<Face>& MeshModel::GetFaces() const
 	return faces;
 }
 
+const glm::vec4 MeshModel::GetMin() const
+{
+	return mins;
+}
+
+const glm::vec4 MeshModel::GetMax() const
+{
+	return maxs;
+}
+
 const std::vector<glm::vec3>& MeshModel::GetNormals() const
 {
 	return normals;
+}
+
+const glm::vec3 MeshModel::GetScale() const {
+	return scale;
+}
+
+const glm::vec3 MeshModel::GetRotation() const {
+	return rotation;
+}
+
+const glm::vec3 MeshModel::GetTranslation() const {
+	return translation;
+}
+
+void MeshModel::ToggleShowVertexNormals(bool val) {
+	showVertexNormals = val;
+}
+
+void MeshModel::SetScale(glm::vec3 _scale) {
+	scale = _scale;
+}
+
+void MeshModel::SetRotation(glm::vec3 _rotation) {
+	rotation = _rotation;
+}
+
+void MeshModel::SetTranslation(glm::vec3 _translation) {
+	translation = _translation;
 }
 
