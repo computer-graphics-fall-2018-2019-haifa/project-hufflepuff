@@ -7,16 +7,21 @@
 
 #define PI 3.14159265358979323846 / 180
 
-Camera::Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up, const MeshModel& m) :
-	zoom(1.0), MeshModel(m), projectionTransformation(glm::mat4(1))
+Camera::Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up) :
+	zoom(1.0), MeshModel(Utils::LoadMeshModel("..\\Data\\camera.obj")), projectionTransformation(glm::mat4(1)),
+	eye(eye), at(at), up(up), isOrth(1)
 {
 	SetCameraLookAt(eye, at, up);
-	SetPerspectiveProjection(30, 1, 100, 1000);
-	SetOrthographicProjection(1, 1, 10, 150);
+	/*SetPerspectiveProjection(30, 1, 100, 1000);
+	SetOrthographicProjection(1, 1, 10, 150);*/
 }
 
 Camera::~Camera()
 {
+}
+
+void Camera::SetCameraLookAt() {
+	this->SetCameraLookAt(eye, at, up);
 }
 
 void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up)
@@ -59,7 +64,7 @@ void Camera::SetOrthographicProjection(
 	float l = -0.5 * width;
 	float r = 0.5 * width;
 
-	this->orthographicTransformation = glm::mat4(
+	this->projectionTransformation = glm::mat4(
 		2 / (r - l), 0, 0, 0,
 		0, 2 / (t - b), 0, 0,
 		0, 0, 2 / (near - far), 0,
@@ -79,6 +84,7 @@ void Camera::SetPerspectiveProjection(
 	float b = -0.5 * nearHeight;
 	float l = -0.5 * nearWidth;
 	float r = 0.5 * nearWidth;
+	float s = 1 / tan(0.5 * fovy * PI);
 
 	this->projectionTransformation = glm::inverse(glm::mat4(
 		(2 * near) / (r - l), 0, (r + l) / (r - l), 0,
@@ -87,6 +93,13 @@ void Camera::SetPerspectiveProjection(
 		0, 0, -1, 0
 	));
 	this->projectionTransformation = glm::transpose(this->projectionTransformation);
+
+	/*this->projectionTransformation = glm::inverse(glm::mat4(
+		s, 0, 0, 0,
+		0, s, 0, 0,
+		0, 0, -(far) / (far - near), -1,
+		0, 0, -(far * near) / (far - near), 0
+	));*/
 }
 
 void Camera::SetZoom(const float zoom)
@@ -99,12 +112,7 @@ glm::mat4 Camera::GetViewTransformation()
 	return this->viewTransformation;
 }
 
-glm::mat4 Camera::GetOrthTransformation()
-{
-	return orthographicTransformation;
-}
-
-glm::mat4 Camera::GetPersTransformation()
+glm::mat4 Camera::GetProjTransformation()
 {
 	return projectionTransformation;
 }

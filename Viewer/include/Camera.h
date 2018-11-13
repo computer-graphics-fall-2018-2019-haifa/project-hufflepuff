@@ -11,19 +11,23 @@
  * Make the Camera class be a subclass of MeshModel, so you can easily and elegantly render 
  * the cameras you have added to the scene.
  */
-class Camera: MeshModel
+class Camera: public MeshModel
 {
 private:
 	glm::mat4x4 viewTransformation;
 	glm::mat4x4 projectionTransformation;
-	glm::mat4x4 orthographicTransformation;
 	float zoom;
 
 public:
-	Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up, const MeshModel& m);
+	glm::vec3 eye;
+	glm::vec3 at;
+	glm::vec3 up;
+	int isOrth;
+	Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up);
 	~Camera();
 
 	void SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up);
+	void SetCameraLookAt();
 
 	void SetOrthographicProjection(
 		const float height,
@@ -41,6 +45,5 @@ public:
 
 	// Add more methods/functionality as needed...
 	glm::mat4 GetViewTransformation();
-	glm::mat4 GetPersTransformation();
-	glm::mat4 GetOrthTransformation();
+	glm::mat4 GetProjTransformation();
 };
