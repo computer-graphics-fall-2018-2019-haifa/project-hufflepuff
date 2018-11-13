@@ -13,10 +13,8 @@
 #define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
 
 typedef glm::vec3 vec3;
-
-vec3 rotateHelper(vec3 &point, const float &theta);
-vec3 scaleHelper(vec3& point, vec3& scale);
-
+int x_add;
+int y_add;
 
 Renderer::Renderer(int viewportWidth, int viewportHeight, int viewportX, int viewportY) :
 	colorBuffer(nullptr),
@@ -81,7 +79,7 @@ void Renderer::SetViewport(int viewportWidth, int viewportHeight, int viewportX,
 	createOpenGLBuffer();
 }
 
-void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& color) {
+void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& color = glm::vec3(0,0,0)) {
 	// Bresenham's line algorithm
 	float
 		x1 = point1.x,
@@ -132,6 +130,88 @@ void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& colo
 	}
 }
 
+void Renderer::DrawSquare(vec3 vertices[4]) {
+	vec3 a = vertices[0],
+		b = vertices[1],
+		c = vertices[2],
+		d = vertices[3],
+		red = vec3(1, 0, 0);
+	DrawLine(a, b, red);
+	DrawLine(a, d, red);
+	DrawLine(b, c, red);
+	DrawLine(c, d, red);
+}
+
+void Renderer::DrawBoundingBox(const glm::vec4& min, const glm::vec4& max)
+{
+	glm::vec3 min3 = Utils::Vec3FromVec4(min);
+	glm::vec3 max3 = Utils::Vec3FromVec4(max);
+
+	min3 += vec3(x_add, y_add, 0);
+	max3 += vec3(x_add, y_add, 0);
+
+	vec3 lowerSquare[4] = {
+		glm::vec3(min3.x, max3.y, min3.z),
+		glm::vec3(max3.x, max3.y, min3.z),
+		glm::vec3(max3.x, min3.y, max3.z),
+		glm::vec3(min3.x, min3.y, max3.z)
+	};
+	DrawSquare(lowerSquare);
+
+	////Upper Square
+	//DrawLine(
+	//	glm::vec3(min3.x, max3.y, min3.z),
+	//	glm::vec3(max3.x, max3.y, min3.z),
+	//	glm::vec3(1, 0, 0)
+	//);
+	//
+	//DrawLine(
+	//	glm::vec3(min3.x, max3.y, min3.z),
+	//	glm::vec3(min3.x, max3.y, max3.z),
+	//	glm::vec3(1, 0, 0)
+	//);
+	//
+	//DrawLine(
+	//	glm::vec3(min3.x, max3.y, max3.z),
+	//	glm::vec3(max3.x, max3.y, max3.z),
+	//	glm::vec3(1, 0, 0)
+	//);
+	//
+	//DrawLine(
+	//	glm::vec3(max3.x, max3.y, max3.z),
+	//	glm::vec3(max3.x, max3.y, min3.z),
+	//	glm::vec3(1, 0, 0)
+	//);
+	//
+
+	////Pillars
+
+	//DrawLine(
+	//	glm::vec3(min3.x, min3.y, min3.z),
+	//	glm::vec3(min3.x, max3.y, min3.z),
+	//	glm::vec3(1, 0, 0)
+	//);
+	//
+
+	//DrawLine(
+	//	glm::vec3(max3.x, min3.y, min3.z),
+	//	glm::vec3(max3.x, max3.y, min3.z),
+	//	glm::vec3(1, 0, 0)
+	//);
+	//
+	//DrawLine(
+	//	glm::vec3(max3.x, min3.y, max3.z),
+	//	glm::vec3(max3.x, max3.y, max3.z),
+	//	glm::vec3(1, 0, 0)
+	//);
+	//
+	//DrawLine(
+	//	glm::vec3(min3.x, min3.y, max3.z),
+	//	glm::vec3(min3.x, max3.y, max3.z),
+	//	glm::vec3(1, 0, 0)
+	//);
+}
+
 void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3& color) {
 	glm::vec3 p1 = vertices[0],
 		p2 = vertices[1],
@@ -141,72 +221,114 @@ void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3& color) 
 	DrawLine(p2, p3, color);
 }
 
-void Renderer::Render(const Scene& scene, const float& scale, const float& rotation, const float translate[2])
+void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
+	glm::vec3 p1 = vertices[0],
+		p2 = vertices[1],
+		p3 = vertices[2],
+		midp2p3 = p2 + p3 / vec3(2,2,2),
+		normal = glm::cross((p2 - p1), (p3 - p1)),
+		startPoint = p1 - (normal * vec3(0.25, 0.25, 0.25)),
+		endPoint = p1 + (normal * vec3(0.25, 0.25, 0.25));
+
+	glm::vec4 endPoint4 = Utils::Vec4FromVec3(endPoint),
+		startPoint4 = Utils::Vec4FromVec3(startPoint);
+
+	endPoint = Utils::Vec3FromVec4(endPoint4);
+	startPoint = Utils::Vec3FromVec4(startPoint4);
+
+	x_add = (int)(viewportWidth / 2);
+	y_add = (int)(viewportHeight / 2);
+
+	//endPoint += vec3(x_add, y_add, 0);
+
+	DrawLine(startPoint, endPoint, vec3(1, 0, 0));
+}
+
+void Renderer::Render(const Scene& scene)
 {
 	//#############################################
 	//## You should override this implementation ##
 	//## Here you should render the scene.       ##
 	//#############################################
 
-	int x_add = (int)(viewportWidth / 2);
-	int y_add = (int)(viewportHeight / 2);
+	x_add = (int)(viewportWidth / 2);
+	y_add = (int)(viewportHeight / 2);
 
 	// draw axes
-	DrawLine(vec3(0, y_add, 0), vec3(viewportWidth, y_add, 0), vec3(1, 1, 0));
-	DrawLine(vec3(x_add, 0, 0), vec3(x_add, viewportHeight, 0), vec3(1, 1, 0));
+	//DrawLine(vec3(0, y_add, 0), vec3(viewportWidth, y_add, 0), vec3(1, 1, 0));
+	//DrawLine(vec3(x_add, 0, 0), vec3(x_add, viewportHeight, 0), vec3(1, 1, 0));
 
 	int modelIndex = scene.GetActiveModelIndex();
 
 	Camera c = scene.GetActiveCamera();
 	glm::mat4 vtMat = c.GetViewTransformation();
-	glm::mat4 ptMat = c.GetPersTransformation();
-	glm::mat4 otMat = c.GetOrthTransformation();
+	glm::mat4 swtMat = scene.GetWorldTransformation();
+
+	if (c.isOrth)
+		c.SetOrthographicProjection(1, 1, 10, 150) ;
+	else
+		c.SetPerspectiveProjection(45, 1, 100, 1000);
+	glm::mat4 ptMat = c.GetProjTransformation();
 
 	std::vector<std::shared_ptr<MeshModel>> models = scene.GetModels();
-	if (models.empty()) return;
-	MeshModel m = *models.at(modelIndex);
-	std::vector<Face> faces = m.GetFaces();
-	std::vector<glm::vec3> vertices = m.GetVertices();
-	std::vector<glm::vec3> normals = m.GetNormals();
+	if (models.empty()) return;	
 
-	float trans_x = translate[0],
-		trans_y = translate[1];
-	vec3 scaleVec3 = vec3(scale, scale, scale);
-	vec3 rotateVec3 = vec3(0, rotation, 0);
-	vec3 translationVec3 = vec3(trans_x, trans_y, 0);
-	vec3 centerVec3 = vec3(x_add, y_add, 0);
-	m.SetWorldTransformation(scaleVec3, rotateVec3, translationVec3);
+	for (std::shared_ptr<MeshModel>& modelPointer : models) {
+		MeshModel m = *modelPointer;
+		std::vector<Face> faces = m.GetFaces();
+		std::vector<glm::vec3> vertices = m.GetVertices();
+		std::vector<glm::vec3> normals = m.GetNormals();
 
-	glm::mat4 wtMat = m.GetWorldTransformation();
+		vec3 scaleVec3 = m.GetScale();
+		vec3 rotateVec3 = m.GetRotation();
+		vec3 translationVec3 = m.GetTranslation();
+		vec3 centerVec3 = vec3(x_add, y_add, 0);
+		m.SetWorldTransformation(scaleVec3, rotateVec3, translationVec3);
+		glm::mat4 wtMat = m.GetWorldTransformation();
 
-	for (Face& face : faces) {
-		std::vector<glm::vec3> triangle = Utils::FaceToVertices(face, vertices);
+		glm::vec4 min = m.GetMin();
+		glm::vec4 max = m.GetMax();
 
-		for (glm::vec3& point : triangle) {
-			glm::vec4 pointVec4 = Utils::Vec4FromVec3(point);
-			pointVec4 = ptMat * otMat * vtMat * wtMat * pointVec4;
-			point = Utils::Vec3FromVec4(pointVec4);
-			point += vec3(x_add, y_add, 0);
+		min = ptMat * vtMat * swtMat * wtMat * min;
+		max = ptMat * vtMat * swtMat * wtMat * max;
+
+		glm::vec3 modelColor = Utils::Vec3FromVec4(m.color, false);
+
+		for (Face& face : faces) {
+			std::vector<glm::vec3> triangle = Utils::FaceToVertices(face, vertices);
+			std::vector<glm::vec3> verticesNormals = Utils::FaceToNormals(face, normals);
+
+			for (int i = 0; i < 3; i++) {
+				glm::vec3 point = triangle[i];
+				glm::vec3 normal = verticesNormals[i];
+				glm::vec3 normalEnd = point + (normal * vec3(0.25, 0.25, 0.25));
+
+				glm::vec4 pointVec4 = Utils::Vec4FromVec3(point);
+				glm::vec4 normalVec4 = Utils::Vec4FromVec3(normalEnd);
+
+				//glm::vec4 aspect(viewportWidth / viewportHeight, 1, 1, 1);
+
+				pointVec4 =  ptMat * vtMat * swtMat * wtMat * pointVec4;
+				normalVec4 = ptMat * vtMat * swtMat * wtMat * normalVec4;
+
+				point = Utils::Vec3FromVec4(pointVec4);
+				normalEnd = Utils::Vec3FromVec4(normalVec4);
+
+				//point += vec3(x_add, y_add, 0);
+				//normalEnd += vec3(x_add, y_add, 0);
+
+				triangle[i] = point;
+				if (m.showVertexNormals)
+					DrawLine(point, normalEnd, vec3(0, 1, 0));
+			}
+
+			DrawTriangle(triangle, modelColor);
+			if (m.showFacesNormals)
+				DrawFaceNormal(triangle, ptMat * vtMat * swtMat * wtMat);
 		}
-		
-		DrawTriangle(triangle, glm::vec3(0, 0, 0));
+		if (m.showBoundingBox)
+			DrawBoundingBox(min, max);
 	}
-}
-
-vec3 scaleHelper(vec3& point, vec3& scale) {
-	return Utils::GetScaleMatrix(scale) * Utils::Vec4FromVec3(point);
-}
-
-vec3 rotateHelper(vec3& point, const float& theta) {
-	glm::mat3x3 rotationMatrix;
-	const float pi = 3.14159265 / 180;
-	rotationMatrix[0][0] = cos(theta * pi);
-	rotationMatrix[0][1] = -sin(theta * pi);
-	rotationMatrix[1][0] = sin(theta * pi);
-	rotationMatrix[1][1] = cos(theta * pi);
-	rotationMatrix[2][2] = 1;
-
-	return rotationMatrix * point;
 }
 
 //##############################

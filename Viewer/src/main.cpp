@@ -5,6 +5,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <cmath>
+#include <time.h>
+#include <stdlib.h>
 
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -47,6 +49,8 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	srand(static_cast <unsigned> (time(0)));
+
 	// Move OpenGL context to the newly created window
 	glfwMakeContextCurrent(window);
 
@@ -58,14 +62,8 @@ int main(int argc, char **argv)
 	Renderer renderer = Renderer(frameBufferWidth, frameBufferHeight);
 	Scene scene = Scene();
 
-	//std::shared_ptr<Camera> c(new Camera(glm::vec3(1, 1, 0), glm::vec3(1, 1, 0), glm::vec3(1, 1, 0)));
-	MeshModel m = Utils::LoadMeshModel("C:\\Users\\bensh\\OneDrive\\Documents\\graphics\\hufflepuff_new\\project-hufflepuff\\Data\\camera.obj");
-	std::shared_ptr<MeshModel> s(&m);
-	scene.AddModel(s);
-	Camera c = Camera(glm::vec3(1, 0, 1), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), m);
-	//c.SetOrthographicProjection(5, 5, 1, 5);
+	Camera *c = new Camera(glm::vec3(0, 0, 4), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	scene.AddCamera(c);
-
 
 	// Setup ImGui
 	ImGuiIO& io = SetupDearImgui(window);
@@ -80,7 +78,7 @@ int main(int argc, char **argv)
 		StartFrame();
 
 		// Here we build the menus for the next frame. Feel free to pass more arguments to this function call
-		DrawImguiMenus(io, scene, scale, rotation, translationVector);
+		DrawImguiMenus(io, scene);
 
 		// Render the next frame
 		RenderFrame(window, scene, renderer, io);
@@ -155,7 +153,7 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 	renderer.ClearColorBuffer(GetClearColor());
 
 	// Render the scene
-	renderer.Render(scene, scale, rotation, translationVector);
+	renderer.Render(scene);
 
 	// Swap buffers
 	renderer.SwapBuffers();
