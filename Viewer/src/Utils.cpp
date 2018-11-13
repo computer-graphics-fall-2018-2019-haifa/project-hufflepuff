@@ -76,11 +76,22 @@ glm::vec4 Utils::Vec4FromVec3(const glm::vec3& v, const float w) {
 	return glm::vec4(v, w);
 }
 
-glm::vec3 Utils::Vec3FromVec4(const glm::vec4& v) {
+glm::vec3 Utils::Vec3FromVec4(const glm::vec4& v, bool divide) {
 	glm::vec4 _v = v;
-	if (v.w != 0)
+	if (v.w != 0 && divide)
 		_v /= v.w;
 	return glm::vec3(_v.x, _v.y, _v.z);
+}
+
+glm::mat4 Utils::GetTransformationMatrix(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate) {
+	glm::mat4 scaleMat = GetScaleMatrix(scale);
+	glm::mat4 rotateMat = GetRotationMatrix(rotate);
+	glm::mat4 translateMat = GetTranslationMatrix(translate);
+
+	return
+		glm::transpose(translateMat)
+		* rotateMat
+		* scaleMat;
 }
 
 
@@ -149,6 +160,29 @@ std::vector<glm::vec3> Utils::FaceToVertices(const Face & face, const std::vecto
 	v.push_back(vertices[j - 1]);
 	v.push_back(vertices[k - 1]);
 	return v;
+}
+
+std::vector<glm::vec3> Utils::FaceToNormals(const Face & face, const std::vector<glm::vec3>& normals)
+{
+	int i = face.GetNormalIndex(0),
+		j = face.GetNormalIndex(1),
+		k = face.GetNormalIndex(2);
+	std::vector<glm::vec3> v = std::vector<glm::vec3>();
+
+	v.push_back(normals[i - 1]);
+	v.push_back(normals[j - 1]);
+	v.push_back(normals[k - 1]);
+	return v;
+}
+
+glm::vec4 Utils::GenerateRandomColor()
+{
+	glm::vec4 color(0);
+	color.x = static_cast<float>(rand()) / (RAND_MAX / 2);
+	color.y = static_cast<float>(rand()) / (RAND_MAX / 2);
+	color.z = static_cast<float>(rand()) / (RAND_MAX / 2);
+	color.w = 1.0f;
+	return color;
 }
 
 std::string Utils::GetFileName(const std::string& filePath)
