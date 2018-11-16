@@ -30,6 +30,8 @@ private:
 	void createOpenGLBuffer();
 	void initOpenGLRendering();
 
+	glm::vec3 centerAxes;
+
 public:
 	Renderer(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
 	~Renderer();
@@ -40,9 +42,13 @@ public:
 	void SetViewport(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
 
 	// Add more methods/functionality as needed...
+	glm::vec3 centerPoint(glm::vec3 point);
+	glm::vec3 centerPoint(glm::vec4 point);
 	void DrawLine(const vec3& point1, const vec3& point2, const vec3& color);
 	void DrawSquare(vec3 vertices[4]);
-	void DrawBoundingBox(const glm::vec4& min, const glm::vec4& max);
+	void DrawBoundingBox(glm::mat4 matrix, glm::vec3 min, glm::vec3 max);
 	void DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3 & color);
 	void DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m);
+	void DrawAxes(const Scene & scene);
+	void DrawModel(MeshModel* model, glm::mat4 matrix);
 };

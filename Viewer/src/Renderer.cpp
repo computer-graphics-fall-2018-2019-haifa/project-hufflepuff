@@ -22,6 +22,8 @@ Renderer::Renderer(int viewportWidth, int viewportHeight, int viewportX, int vie
 {
 	initOpenGLRendering();
 	SetViewport(viewportWidth, viewportHeight, viewportX, viewportY);
+
+	this->centerAxes = glm::vec3((int)viewportWidth / 2, (int)viewportHeight / 2, 0);
 }
 
 Renderer::~Renderer()
@@ -77,6 +79,21 @@ void Renderer::SetViewport(int viewportWidth, int viewportHeight, int viewportX,
 	this->viewportHeight = viewportHeight;
 	createBuffers(viewportWidth, viewportHeight);
 	createOpenGLBuffer();
+
+	int x_add = (int)(viewportWidth / 2);
+	int y_add = (int)(viewportHeight / 2);
+
+	centerAxes = vec3(x_add, y_add, 0);
+}
+
+glm::vec3 Renderer::centerPoint(glm::vec3 point)
+{
+	return point + centerAxes;
+}
+
+glm::vec3 Renderer::centerPoint(glm::vec4 point)
+{
+	return Utils::Vec3FromVec4(point) + centerAxes;
 }
 
 void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& color = glm::vec3(0,0,0)) {
@@ -142,74 +159,34 @@ void Renderer::DrawSquare(vec3 vertices[4]) {
 	DrawLine(c, d, red);
 }
 
-void Renderer::DrawBoundingBox(const glm::vec4& min, const glm::vec4& max)
+void Renderer::DrawBoundingBox(glm::mat4 matrix, glm::vec3 min, glm::vec3 max)
 {
-	glm::vec3 min3 = Utils::Vec3FromVec4(min);
-	glm::vec3 max3 = Utils::Vec3FromVec4(max);
+	/*
+	 * points are represented by 3 sets of options:
+	 * 1.   front | back
+	 * 2.   top   | bottom
+	 * 3.   left  | right
+	 * 
+	 */
+	vec3
+		ftl = centerPoint(matrix * glm::vec4(min.x, max.y, min.z, 1)),
+		ftr = centerPoint(matrix * glm::vec4(max.x, max.y, min.z, 1)),
+		fbl = centerPoint(matrix * glm::vec4(min.x, min.y, min.z, 1)),
+		fbr = centerPoint(matrix * glm::vec4(max.x, min.y, min.z, 1)),
+		btl = centerPoint(matrix * glm::vec4(min.x, max.y, max.z, 1)),
+		btr = centerPoint(matrix * glm::vec4(max.x, max.y, max.z, 1)),
+		bbl = centerPoint(matrix * glm::vec4(min.x, min.y, max.z, 1)),
+		bbr = centerPoint(matrix * glm::vec4(max.x, min.y, max.z, 1));
 
-	min3 += vec3(x_add, y_add, 0);
-	max3 += vec3(x_add, y_add, 0);
+	vec3 upperSquare[4] = { ftl, ftr, btr, btl };
+	vec3 lowerSquare[4] = { fbl, fbr, bbr, bbl };
+	vec3 rightSquare[4] = { ftr, btr, bbr, fbr };
+	vec3 leftSquare[4]  = { ftl, btl, bbl, fbl };
 
-	vec3 lowerSquare[4] = {
-		glm::vec3(min3.x, max3.y, min3.z),
-		glm::vec3(max3.x, max3.y, min3.z),
-		glm::vec3(max3.x, min3.y, max3.z),
-		glm::vec3(min3.x, min3.y, max3.z)
-	};
 	DrawSquare(lowerSquare);
-
-	////Upper Square
-	//DrawLine(
-	//	glm::vec3(min3.x, max3.y, min3.z),
-	//	glm::vec3(max3.x, max3.y, min3.z),
-	//	glm::vec3(1, 0, 0)
-	//);
-	//
-	//DrawLine(
-	//	glm::vec3(min3.x, max3.y, min3.z),
-	//	glm::vec3(min3.x, max3.y, max3.z),
-	//	glm::vec3(1, 0, 0)
-	//);
-	//
-	//DrawLine(
-	//	glm::vec3(min3.x, max3.y, max3.z),
-	//	glm::vec3(max3.x, max3.y, max3.z),
-	//	glm::vec3(1, 0, 0)
-	//);
-	//
-	//DrawLine(
-	//	glm::vec3(max3.x, max3.y, max3.z),
-	//	glm::vec3(max3.x, max3.y, min3.z),
-	//	glm::vec3(1, 0, 0)
-	//);
-	//
-
-	////Pillars
-
-	//DrawLine(
-	//	glm::vec3(min3.x, min3.y, min3.z),
-	//	glm::vec3(min3.x, max3.y, min3.z),
-	//	glm::vec3(1, 0, 0)
-	//);
-	//
-
-	//DrawLine(
-	//	glm::vec3(max3.x, min3.y, min3.z),
-	//	glm::vec3(max3.x, max3.y, min3.z),
-	//	glm::vec3(1, 0, 0)
-	//);
-	//
-	//DrawLine(
-	//	glm::vec3(max3.x, min3.y, max3.z),
-	//	glm::vec3(max3.x, max3.y, max3.z),
-	//	glm::vec3(1, 0, 0)
-	//);
-	//
-	//DrawLine(
-	//	glm::vec3(min3.x, min3.y, max3.z),
-	//	glm::vec3(min3.x, max3.y, max3.z),
-	//	glm::vec3(1, 0, 0)
-	//);
+	DrawSquare(upperSquare);
+	DrawSquare(rightSquare);
+	DrawSquare(leftSquare);
 }
 
 void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3& color) {
@@ -225,10 +202,10 @@ void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
 	glm::vec3 p1 = vertices[0],
 		p2 = vertices[1],
 		p3 = vertices[2],
-		midp2p3 = p2 + p3 / vec3(2,2,2),
+		mid = (p1 + p2 + p3) / vec3(3,3,3),
 		normal = glm::cross((p2 - p1), (p3 - p1)),
-		startPoint = p1 - (normal * vec3(0.25, 0.25, 0.25)),
-		endPoint = p1 + (normal * vec3(0.25, 0.25, 0.25));
+		startPoint = mid - (normal * vec3(0.2)),
+		endPoint = mid + (normal * vec3(0.2));
 
 	glm::vec4 endPoint4 = Utils::Vec4FromVec3(endPoint),
 		startPoint4 = Utils::Vec4FromVec3(startPoint);
@@ -244,6 +221,60 @@ void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
 	DrawLine(startPoint, endPoint, vec3(1, 0, 0));
 }
 
+void Renderer::DrawAxes(const Scene& scene) {
+	float size = 350;
+	glm::mat4 matrix = Utils::TransMatricesScene(scene);
+	glm::vec3
+		x_neg = Utils::Mult(matrix, vec3(-size, 0, 0)),
+		x_pos = Utils::Mult(matrix, vec3(size, 0, 0)),
+		y_neg = Utils::Mult(matrix, vec3(0, -size, 0)),
+		y_pos = Utils::Mult(matrix, vec3(0, size, 0)),
+		z_neg = Utils::Mult(matrix, vec3(0, 0, -size)),
+		z_pos = Utils::Mult(matrix, vec3(0, 0, size));
+
+	// x axis
+	DrawLine(centerPoint(x_pos), centerPoint(x_neg), vec3(1, 0, 0));
+
+	// y axis
+	DrawLine(centerPoint(y_pos), centerPoint(y_neg), vec3(0, 1, 0));
+
+	// z axis
+	DrawLine(centerPoint(z_pos), centerPoint(z_neg), vec3(0, 0, 1));
+}
+
+void Renderer::DrawModel(MeshModel* _model, glm::mat4 matrix) {
+	MeshModel model = *_model;
+	std::vector<Face> faces = model.GetFaces();
+	std::vector<glm::vec3> vertices = model.GetVertices();
+	std::vector<glm::vec3> normals = model.GetNormals();
+	vec3 modelColor = Utils::Vec3FromVec4(model.color, false);
+
+	glm::vec3 min = Utils::Vec3FromVec4(model.GetMin()),
+		max = Utils::Vec3FromVec4(model.GetMax());
+
+	if (model.showBoundingBox)
+		DrawBoundingBox(matrix, min, max);
+
+	for (Face& face : faces) {
+		std::vector<glm::vec3> triangle = Utils::FaceToVertices(face, vertices);
+		std::vector<glm::vec3> verticesNormals = Utils::FaceToNormals(face, normals);
+
+		for (int i = 0; i < 3; i++) {
+			vec3 point = centerPoint(Utils::Mult(matrix, triangle[i]));
+			vec3 normal = Utils::Mult(matrix, verticesNormals[i]);
+			vec3 normalEnd = point + (normal * vec3(0.15));
+
+			triangle[i] = point;
+			if (model.showVertexNormals)
+				DrawLine(point, normalEnd, vec3(0, 1, 0));
+		}
+
+		DrawTriangle(triangle, modelColor);
+		if (model.showFacesNormals)
+			DrawFaceNormal(triangle, matrix);
+	}
+}
+
 void Renderer::Render(const Scene& scene)
 {
 	//#############################################
@@ -254,80 +285,29 @@ void Renderer::Render(const Scene& scene)
 	x_add = (int)(viewportWidth / 2);
 	y_add = (int)(viewportHeight / 2);
 
+	centerAxes = vec3(x_add, y_add, 0);
+
 	// draw axes
-	//DrawLine(vec3(0, y_add, 0), vec3(viewportWidth, y_add, 0), vec3(1, 1, 0));
-	//DrawLine(vec3(x_add, 0, 0), vec3(x_add, viewportHeight, 0), vec3(1, 1, 0));
-
-	int modelIndex = scene.GetActiveModelIndex();
-
-	Camera c = scene.GetActiveCamera();
-	glm::mat4 vtMat = c.GetViewTransformation();
-	glm::mat4 swtMat = scene.GetWorldTransformation();
-
-	if (c.isOrth)
-		c.SetOrthographicProjection(1, 1, 10, 150) ;
-	else
-		c.SetPerspectiveProjection(45, 1, 100, 1000);
-	glm::mat4 ptMat = c.GetProjTransformation();
+	DrawAxes(scene);
 
 	std::vector<std::shared_ptr<MeshModel>> models = scene.GetModels();
-	if (models.empty()) return;	
+	std::vector<Camera*> cameras = scene.GetCameras();
 
-	for (std::shared_ptr<MeshModel>& modelPointer : models) {
-		MeshModel m = *modelPointer;
-		std::vector<Face> faces = m.GetFaces();
-		std::vector<glm::vec3> vertices = m.GetVertices();
-		std::vector<glm::vec3> normals = m.GetNormals();
+	// draw models
+	for (int i = 0; i < scene.GetModelCount(); i++) {
+		MeshModel* model = &(*models.at(i));
+		(*model).SetWorldTransformation();
+		glm::mat4 matrix = Utils::TransMatricesModel(scene, i);
+		DrawModel(model, matrix);
+	}
 
-		vec3 scaleVec3 = m.GetScale();
-		vec3 rotateVec3 = m.GetRotation();
-		vec3 translationVec3 = m.GetTranslation();
-		vec3 centerVec3 = vec3(x_add, y_add, 0);
-		m.SetWorldTransformation(scaleVec3, rotateVec3, translationVec3);
-		glm::mat4 wtMat = m.GetWorldTransformation();
-
-		glm::vec4 min = m.GetMin();
-		glm::vec4 max = m.GetMax();
-
-		min = ptMat * vtMat * swtMat * wtMat * min;
-		max = ptMat * vtMat * swtMat * wtMat * max;
-
-		glm::vec3 modelColor = Utils::Vec3FromVec4(m.color, false);
-
-		for (Face& face : faces) {
-			std::vector<glm::vec3> triangle = Utils::FaceToVertices(face, vertices);
-			std::vector<glm::vec3> verticesNormals = Utils::FaceToNormals(face, normals);
-
-			for (int i = 0; i < 3; i++) {
-				glm::vec3 point = triangle[i];
-				glm::vec3 normal = verticesNormals[i];
-				glm::vec3 normalEnd = point + (normal * vec3(0.25, 0.25, 0.25));
-
-				glm::vec4 pointVec4 = Utils::Vec4FromVec3(point);
-				glm::vec4 normalVec4 = Utils::Vec4FromVec3(normalEnd);
-
-				//glm::vec4 aspect(viewportWidth / viewportHeight, 1, 1, 1);
-
-				pointVec4 =  ptMat * vtMat * swtMat * wtMat * pointVec4;
-				normalVec4 = ptMat * vtMat * swtMat * wtMat * normalVec4;
-
-				point = Utils::Vec3FromVec4(pointVec4);
-				normalEnd = Utils::Vec3FromVec4(normalVec4);
-
-				//point += vec3(x_add, y_add, 0);
-				//normalEnd += vec3(x_add, y_add, 0);
-
-				triangle[i] = point;
-				if (m.showVertexNormals)
-					DrawLine(point, normalEnd, vec3(0, 1, 0));
-			}
-
-			DrawTriangle(triangle, modelColor);
-			if (m.showFacesNormals)
-				DrawFaceNormal(triangle, ptMat * vtMat * swtMat * wtMat);
-		}
-		if (m.showBoundingBox)
-			DrawBoundingBox(min, max);
+	// draw camera models
+	for (int i = 0; i < scene.GetCameraCount(); i++) {
+		if (i == scene.GetActiveCameraIndex()) continue;
+		MeshModel* model = cameras.at(i);
+		(*model).SetWorldTransformation();
+		glm::mat4 matrix = Utils::TransMatricesCamera(scene, i);
+		DrawModel(model, matrix);
 	}
 }
 
