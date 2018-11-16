@@ -36,8 +36,11 @@ void Scene::AddCamera(Camera* camera)
 {
 	activeCameraIndex = GetCameraCount();
 	cameras.push_back(camera);
-	(*camera).SetModelName("camera" + std::to_string(activeCameraIndex));
-	models.push_back(std::make_shared<MeshModel>(*camera));
+	camera->SetModelName("camera" + std::to_string(activeCameraIndex));
+	camera->scale = glm::vec3(15);
+
+	float theta = glm::angle(camera->at, camera->eye);
+	camera->rotation = glm::vec3(theta);
 }
 
 const int Scene::GetCameraCount() const
@@ -47,7 +50,6 @@ const int Scene::GetCameraCount() const
 
 void Scene::SetActiveCameraIndex(int index)
 {
-	// implementation suggestion...
 	if (index >= 0 && index < cameras.size())
 	{
 		activeCameraIndex = index;
@@ -61,7 +63,6 @@ const int Scene::GetActiveCameraIndex() const
 
 void Scene::SetActiveModelIndex(int index)
 {
-	// implementation suggestion...
 	if (index >= 0 && index < models.size())
 	{
 		activeModelIndex = index;
@@ -82,9 +83,19 @@ std::vector<Camera*> Scene::GetCameras() const
 	return cameras;
 }
 
-const std::shared_ptr<MeshModel>& Scene::GetModel(int index) const
+const MeshModel& Scene::GetModel(int index) const
 {
-	return models.at(index);
+	return *(models.at(index));
+}
+
+const Camera & Scene::GetCamera(int index) const
+{
+	return *cameras.at(index);
+}
+
+const MeshModel& Scene::GetActiveModel() const
+{
+	return GetModel(activeModelIndex);
 }
 
 const Camera & Scene::GetActiveCamera() const
@@ -100,5 +111,5 @@ void Scene::SetWorldTransformation()
 
 glm::mat4 Scene::GetWorldTransformation() const
 {
-	return worldTransformation;
+	return this->worldTransformation;
 }

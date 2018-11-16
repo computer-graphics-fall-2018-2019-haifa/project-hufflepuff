@@ -1,7 +1,9 @@
 #pragma once
 
+#define GLM_ENABLE_EXPERIMENTAL 1
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <glm/gtx/vector_angle.hpp>
 #include <vector>
 #include <string>
 #include <memory>
@@ -43,7 +45,9 @@ public:
 	// Add more methods as needed...
 	std::vector<std::shared_ptr<MeshModel>> GetModels() const;
 	std::vector<Camera*> GetCameras() const;
-	const std::shared_ptr<MeshModel>& Scene::GetModel(int index) const;
+	const MeshModel & GetModel(int index) const;
+	const Camera & GetCamera(int index) const;
+	const MeshModel& GetActiveModel() const;
 
 	const Camera& GetActiveCamera() const;
 
