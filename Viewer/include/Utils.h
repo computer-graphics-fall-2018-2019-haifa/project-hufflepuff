@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <string>
 #include "MeshModel.h"
+#include "Scene.h"
 
 
 /*
@@ -24,10 +25,16 @@ public:
 	static glm::vec3 Vec3FromVec4(const glm::vec4& v, bool divide = true);
 
 	static glm::mat4 GetTransformationMatrix(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate);
-
 	static glm::mat4 GetScaleMatrix(const glm::vec3 s);
 	static glm::mat4 GetTranslationMatrix(const glm::vec3 translationVector);
 	static glm::mat4 GetRotationMatrix(const glm::vec3 rotateVector);
+
+	static glm::mat4 TransMatricesScene(const Scene & scene);
+	static glm::mat4 TransMatricesModel(const Scene & scene, int modelIdx = -1);
+	static glm::mat4 TransMatricesCamera(const Scene & scene, int cameraIdx = -1);
+
+	static glm::vec3 Mult(glm::mat4& mat, glm::vec3& point);
+	static glm::vec3 Mult(glm::mat4& mat, glm::vec4& point);
 
 	static std::vector<glm::vec3> FaceToVertices(const Face& face, const std::vector<glm::vec3>& vertices);
 	static std::vector<glm::vec3> FaceToNormals(const Face& face, const std::vector<glm::vec3>& normals);

@@ -149,6 +149,37 @@ glm::mat4 Utils::GetRotationMatrix(const glm::vec3 rotateVector) {
 	return xAxis * yAxis * zAxis;
 }
 
+glm::mat4 Utils::TransMatricesScene(const Scene & scene) {
+	Camera camera = scene.GetActiveCamera();
+
+	glm::mat4
+		swtMat = scene.GetWorldTransformation(),
+		cvtMat = camera.GetViewTransformation(),
+		cptMat = camera.GetProjTransformation();
+
+	return cptMat * cvtMat * swtMat;
+}
+
+glm::mat4 Utils::TransMatricesModel(const Scene & scene, int modelIdx) {
+	glm::mat4 wtMat = scene.GetModel(modelIdx).GetWorldTransformation();
+	return TransMatricesScene(scene) * wtMat;
+}
+
+glm::mat4 Utils::TransMatricesCamera(const Scene & scene, int cameraIdx) {
+	glm::mat4 wtMat = scene.GetCamera(cameraIdx).GetWorldTransformation();
+	return TransMatricesScene(scene) * wtMat;
+}
+
+glm::vec3 Utils::Mult(glm::mat4 & mat, glm::vec3 & point)
+{
+	return Vec3FromVec4(mat * Vec4FromVec3(point));
+}
+
+glm::vec3 Utils::Mult(glm::mat4 & mat, glm::vec4 & point)
+{
+	return Vec3FromVec4(mat * point);
+}
+
 std::vector<glm::vec3> Utils::FaceToVertices(const Face & face, const std::vector<glm::vec3>& vertices)
 {
 	int i = face.GetVertexIndex(0),
