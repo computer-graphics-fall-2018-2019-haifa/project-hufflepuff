@@ -14,7 +14,7 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 	worldTransform(glm::mat4x4(1)),
 	mins(glm::vec4(INFINITY, INFINITY, INFINITY, 1)),
 	maxs(glm::vec4(-INFINITY, -INFINITY, -INFINITY, 1)),
-	scale({ 1,1,0 }),
+	scale({ 1,1,1 }),
 	rotation({ 0,0,0 }),
 	translation({ 0,0,0 }),
 	showFacesNormals(false),
@@ -63,6 +63,10 @@ void MeshModel::SetWorldTransformation(const glm::mat4x4& worldTransform)
 	this->worldTransform = worldTransform;
 }
 
+void MeshModel::SetWorldTransformation() {
+	this->SetWorldTransformation(scale, rotation, translation);
+}
+
 void MeshModel::SetWorldTransformation(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate)
 {
 	this->worldTransform = Utils::GetTransformationMatrix(scale, rotate, translate);
@@ -70,7 +74,7 @@ void MeshModel::SetWorldTransformation(glm::vec3 scale, glm::vec3 rotate, glm::v
 
 const glm::mat4x4& MeshModel::GetWorldTransformation() const
 {
-	return worldTransform;
+	return this->worldTransform;
 }
 
 void MeshModel::SetColor(const glm::vec4& color)
@@ -128,10 +132,6 @@ const glm::vec3 MeshModel::GetRotation() const {
 
 const glm::vec3 MeshModel::GetTranslation() const {
 	return translation;
-}
-
-void MeshModel::ToggleShowVertexNormals(bool val) {
-	showVertexNormals = val;
 }
 
 void MeshModel::SetScale(glm::vec3 _scale) {

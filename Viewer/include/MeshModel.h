@@ -34,6 +34,7 @@ public:
 	MeshModel(const MeshModel& other);
 	virtual ~MeshModel();
 
+	void SetWorldTransformation();
 	void SetWorldTransformation(const glm::mat4x4& worldTransform);
 	void SetWorldTransformation(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate);
 	const glm::mat4x4& GetWorldTransformation() const;
@@ -55,7 +56,6 @@ public:
 	const glm::vec3 GetScale() const;
 	const glm::vec3 GetRotation() const;
 	const glm::vec3 GetTranslation() const;
-	void ToggleShowVertexNormals(bool val);
 	void SetScale(glm::vec3 _s);
 	void SetRotation(glm::vec3 _r);
 	void SetTranslation(glm::vec3 _t);
