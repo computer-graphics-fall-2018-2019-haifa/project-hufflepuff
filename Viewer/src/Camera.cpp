@@ -9,7 +9,7 @@
 
 Camera::Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up) :
 	zoom(1.0), MeshModel(Utils::LoadMeshModel("..\\Data\\camera.obj")), projectionTransformation(glm::mat4(1)),
-	eye(eye), at(at), up(up), isOrth(1)
+	eye(eye), at(at), up(up), isOrth(1), fovy(45), height(2.5f), aspectRatio(1), n(10), f(1000)
 {
 	SetCameraLookAt(eye, at, up);
 	/*SetPerspectiveProjection(30, 1, 100, 1000);
@@ -22,6 +22,11 @@ Camera::~Camera()
 
 void Camera::SetCameraLookAt() {
 	this->SetCameraLookAt(eye, at, up);
+}
+
+void Camera::SetOrthographicProjection()
+{
+	this->SetOrthographicProjection(height, aspectRatio, n, f);
 }
 
 void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up)
@@ -52,54 +57,56 @@ void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const gl
 	this->viewTransformation = c * identity;
 }
 
+void Camera::SetWorldTransformation() {
+	MeshModel::SetWorldTransformation();
+	MeshModel::SetWorldTransformation(glm::inverse(this->GetWorldTransformation()));
+}
+
 void Camera::SetOrthographicProjection(
-	const float height,
-	const float aspectRatio,
-	const float near,
-	const float far)
+	const float _height,
+	const float _aspectRatio,
+	const float _near,
+	const float _far)
 {
-	float width = height * aspectRatio;
-	float t = 0.5 * height;
-	float b = -0.5 * height;
+	float width = _height * _aspectRatio;
+	float t = 0.5 * _height;
+	float b = -0.5 * _height;
 	float l = -0.5 * width;
 	float r = 0.5 * width;
 
 	this->projectionTransformation = glm::mat4(
 		2 / (r - l), 0, 0, 0,
 		0, 2 / (t - b), 0, 0,
-		0, 0, 2 / (near - far), 0,
-		-(r + l) / (r - l), -(t + b) / (t - b), -(far + near) / (far - near), 1
+		0, 0, 2 / (_near - _far), 0,
+		-(r + l) / (r - l), -(t + b) / (t - b), -(_far + _near) / (_far - _near), 1
 	);
 }
 
+void Camera::SetPerspectiveProjection() {
+	this->SetPerspectiveProjection(fovy, aspectRatio, n, f);
+}
+
 void Camera::SetPerspectiveProjection(
-	const float fovy,
-	const float aspectRatio,
-	const float near,
-	const float far)
+	const float _fovy,
+	const float _aspectRatio,
+	const float _near,
+	const float _far)
 {
-	float nearHeight = 2 * near * tan(0.5 * fovy * PI);
-	float nearWidth = aspectRatio * nearHeight;
+	float nearHeight = (_far - _near) * tan(_fovy * PI);
+	//float nearHeight = 2 * _near * tan(0.5 * _fovy * PI);
+	float nearWidth = _aspectRatio * nearHeight;
 	float t = 0.5 * nearHeight;
 	float b = -0.5 * nearHeight;
 	float l = -0.5 * nearWidth;
 	float r = 0.5 * nearWidth;
-	float s = 1 / tan(0.5 * fovy * PI);
 
 	this->projectionTransformation = glm::inverse(glm::mat4(
-		(2 * near) / (r - l), 0, (r + l) / (r - l), 0,
-		0, (2 * near) / (t - b), (t + b) / (t - b), 0,
-		0, 0, -(far + near) / (far - near), -(2 * far * near) / (far - near),
+		(2 * _near) / (r - l), 0, (r + l) / (r - l), 0,
+		0, (2 * _near) / (t - b), (t + b) / (t - b), 0,
+		0, 0, -(_far + _near) / (_far - _near), -(2 * _far * _near) / (_far - _near),
 		0, 0, -1, 0
 	));
 	this->projectionTransformation = glm::transpose(this->projectionTransformation);
-
-	/*this->projectionTransformation = glm::inverse(glm::mat4(
-		s, 0, 0, 0,
-		0, s, 0, 0,
-		0, 0, -(far) / (far - near), -1,
-		0, 0, -(far * near) / (far - near), 0
-	));*/
 }
 
 void Camera::SetZoom(const float zoom)
@@ -114,5 +121,5 @@ glm::mat4 Camera::GetViewTransformation()
 
 glm::mat4 Camera::GetProjTransformation()
 {
-	return projectionTransformation;
+	return this->projectionTransformation;
 }
