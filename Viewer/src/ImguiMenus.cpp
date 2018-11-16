@@ -5,6 +5,7 @@
 #include "MeshModel.h"
 #include "Utils.h"
 #include <cmath>
+#include <math.h>
 #include <memory>
 #include <stdio.h>
 #include <string>
@@ -16,6 +17,7 @@
 
 bool showDemoWindow = false;
 bool showAnotherWindow = false;
+bool incremental = false;
 bool lockScale = true;
 bool lockRotation = true;
 bool lockTranslation = true;
@@ -40,9 +42,6 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 	int isOrthographicPerspective = 1;
 
-	std::shared_ptr<MeshModel> activeModel = models.at(activeModelIndex);
-	Camera* activeCamera = cameras.at(activeCameraIndex);
-
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
 	if (showDemoWindow)
 	{
@@ -62,6 +61,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		ImGui::ColorEdit3("Background color", (float*)&clearColor); // Edit 3 floats representing a color
 
 		if (ImGui::CollapsingHeader("Models") && modelsAmount > 0) {
+			std::shared_ptr<MeshModel> activeModel = models.at(activeModelIndex);
 			char** modelNames = new char*[modelsAmount];
 			for (int i = 0; i < modelsAmount; i++)
 				modelNames[i] = const_cast<char*>((*models[i]).GetModelName().c_str());
@@ -72,6 +72,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::Checkbox("Vertex Normals", &(activeModel->showVertexNormals));
 			ImGui::Checkbox("Face Normals", &(activeModel->showFacesNormals));
 			ImGui::Checkbox("Bouding Box", &(activeModel->showBoundingBox));
+			ImGui::Separator();
 			ImGui::Checkbox("Lock scale", &lockScale);
 			if (lockScale) {
 				ImGui::SliderFloat("Scale All", &(activeModel->scale.x), 1.0f, 100.0f);
@@ -110,18 +111,20 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 			ImGui::ColorEdit3("Color", (float*)&(activeModel->color));
 
+			activeModel->SetWorldTransformation();
+
 			delete [] modelNames;
 		}
 
 		ImGui::Separator();
 
 		if (ImGui::CollapsingHeader("Cameras") && camerasAmount > 0) {
+			Camera* activeCamera = cameras.at(activeCameraIndex);
 			if (ImGui::Button("Add Camera")) {
-				Camera *c = new Camera(
-					activeCamera->eye * glm::vec3(-1),
-					activeCamera->eye,
-					activeCamera->up
-				);
+				glm::vec3 eye = activeCamera->eye,
+					at = activeCamera->at,
+					up = activeCamera->up;
+				Camera *c = new Camera(at, eye, up);
 				scene.AddCamera(c);
 			}
 
@@ -132,23 +135,45 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::Combo("Select Camera", &scene.activeCameraIndex, cameraNames, camerasAmount);
 
 			ImGui::Text("Active Camera Preferences:");
-			ImGui::SliderFloat("Eye X", &(activeCamera->eye.x), -100.0f, 100.0f);
-			ImGui::SliderFloat("Eye Y", &(activeCamera->eye.y), -100.0f, 100.0f);
-			ImGui::SliderFloat("Eye Z", &(activeCamera->eye.z), -100.0f, 100.0f);
-
+			ImGui::SliderFloat("Eye X", &(activeCamera->eye.x), -1000.0f, 1000.0f);
+			ImGui::SliderFloat("Eye Y", &(activeCamera->eye.y), -1000.0f, 1000.0f);
+			ImGui::SliderFloat("Eye Z", &(activeCamera->eye.z), -1000.0f, 1000.0f);
+			ImGui::Separator();
 			ImGui::SliderFloat("At X", &(activeCamera->at.x), -100.0f, 100.0f);
 			ImGui::SliderFloat("At Y", &(activeCamera->at.y), -100.0f, 100.0f);
 			ImGui::SliderFloat("At Z", &(activeCamera->at.z), -100.0f, 100.0f);
-
+			ImGui::Separator();
 			ImGui::SliderFloat("Up X", &(activeCamera->up.x), -100.0f, 100.0f);
 			ImGui::SliderFloat("Up Y", &(activeCamera->up.y), -100.0f, 100.0f);
 			ImGui::SliderFloat("Up Z", &(activeCamera->up.z), -100.0f, 100.0f);
-
+			ImGui::Separator();
+			ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 1.0f, 5.0f);
+			ImGui::Separator();
 			ImGui::RadioButton("Orthographic", &(activeCamera->isOrth), 1);
 			ImGui::RadioButton("Perspective", &(activeCamera->isOrth), 0);
 
+			if (activeCamera->isOrth) {
+				ImGui::SliderFloat("Height", &(activeCamera->height), 1.0f, 100.0f);
+			}
+			else {
+				ImGui::SliderFloat("Fovy", &(activeCamera->fovy), 0.0f, 180.0f);
+			}
+
+			ImGui::SliderFloat("Aspect Ratio", &(activeCamera->aspectRatio), 0.1f, 2.0f);
+			ImGui::SliderFloat("Near", &(activeCamera->n), 10.0f, 100.0f);
+			ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
+
+			if (activeCamera->isOrth)
+				activeCamera->SetOrthographicProjection();
+			else {
+				activeCamera->SetPerspectiveProjection();
+			}
+
 			activeCamera->SetCameraLookAt();
-			scene.translation = activeCamera->eye;
+			scene.scale = glm::vec3(activeCamera->zoom);
+			activeCamera->translation = activeCamera->eye;
+			//activeCamera->rotation = activeCamera->at - activeCamera->eye;
+			activeCamera->SetWorldTransformation();
 			scene.SetWorldTransformation();
 
 			delete[] cameraNames;

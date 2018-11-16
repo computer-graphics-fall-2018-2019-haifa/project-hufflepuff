@@ -22,6 +22,7 @@
 float scale = 1.0f;
 float rotation = 0.0f;
 float translationVector[2] = { 0.0, 0.0 };
+Renderer* r;
 
 // Function declarations
 static void GlfwErrorCallback(int error, const char* description);
@@ -37,6 +38,10 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 	
 	// Handle mouse scrolling here...
+}
+
+void window_size_callback(GLFWwindow* window, int width, int height) {
+	(*r).SetViewport(width, height);
 }
 
 int main(int argc, char **argv)
@@ -59,10 +64,14 @@ int main(int argc, char **argv)
 	glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
 
 	// Create the renderer and the scene
+
 	Renderer renderer = Renderer(frameBufferWidth, frameBufferHeight);
+	r = &renderer;
 	Scene scene = Scene();
 
-	Camera *c = new Camera(glm::vec3(0, 0, 4), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	glfwSetWindowSizeCallback(window, window_size_callback);
+
+	Camera *c = new Camera(glm::vec3(350), glm::vec3(0), glm::vec3(0, 1, 0));
 	scene.AddCamera(c);
 
 	// Setup ImGui
