@@ -147,16 +147,15 @@ void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& colo
 	}
 }
 
-void Renderer::DrawSquare(vec3 vertices[4]) {
+void Renderer::DrawSquare(vec3 vertices[4], vec3 color) {
 	vec3 a = vertices[0],
 		b = vertices[1],
 		c = vertices[2],
-		d = vertices[3],
-		red = vec3(1, 0, 0);
-	DrawLine(a, b, red);
-	DrawLine(a, d, red);
-	DrawLine(b, c, red);
-	DrawLine(c, d, red);
+		d = vertices[3];
+	DrawLine(a, b, color);
+	DrawLine(a, d, color);
+	DrawLine(b, c, color);
+	DrawLine(c, d, color);
 }
 
 void Renderer::DrawBoundingBox(glm::mat4 matrix, glm::vec3 min, glm::vec3 max)
@@ -177,16 +176,17 @@ void Renderer::DrawBoundingBox(glm::mat4 matrix, glm::vec3 min, glm::vec3 max)
 		btr = centerPoint(matrix * glm::vec4(max.x, max.y, max.z, 1)),
 		bbl = centerPoint(matrix * glm::vec4(min.x, min.y, max.z, 1)),
 		bbr = centerPoint(matrix * glm::vec4(max.x, min.y, max.z, 1));
+	vec3 color = vec3(0, 0.5, 0.5);
 
 	vec3 upperSquare[4] = { ftl, ftr, btr, btl };
 	vec3 lowerSquare[4] = { fbl, fbr, bbr, bbl };
 	vec3 rightSquare[4] = { ftr, btr, bbr, fbr };
 	vec3 leftSquare[4]  = { ftl, btl, bbl, fbl };
 
-	DrawSquare(lowerSquare);
-	DrawSquare(upperSquare);
-	DrawSquare(rightSquare);
-	DrawSquare(leftSquare);
+	DrawSquare(lowerSquare, color);
+	DrawSquare(upperSquare, color);
+	DrawSquare(rightSquare, color);
+	DrawSquare(leftSquare, color);
 }
 
 void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3& color) {
@@ -202,10 +202,10 @@ void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
 	glm::vec3 p1 = vertices[0],
 		p2 = vertices[1],
 		p3 = vertices[2],
-		mid = (p1 + p2 + p3) / vec3(3,3,3),
+		mid = (p1 + p2 + p3) / vec3(3),
 		normal = glm::cross((p2 - p1), (p3 - p1)),
-		startPoint = mid - (normal * vec3(0.2)),
-		endPoint = mid + (normal * vec3(0.2));
+		startPoint = mid - (normal * vec3(1)),
+		endPoint = mid + (normal * vec3(1));
 
 	glm::vec4 endPoint4 = Utils::Vec4FromVec3(endPoint),
 		startPoint4 = Utils::Vec4FromVec3(startPoint);
@@ -216,13 +216,11 @@ void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
 	x_add = (int)(viewportWidth / 2);
 	y_add = (int)(viewportHeight / 2);
 
-	//endPoint += vec3(x_add, y_add, 0);
-
-	DrawLine(startPoint, endPoint, vec3(1, 0, 0));
+	DrawLine(startPoint, endPoint, vec3(0.5, 0, 0.5));
 }
 
 void Renderer::DrawAxes(const Scene& scene) {
-	float size = 350;
+	float size = 400;
 	glm::mat4 matrix = Utils::TransMatricesScene(scene);
 	glm::vec3
 		x_neg = Utils::Mult(matrix, vec3(-size, 0, 0)),
@@ -231,6 +229,18 @@ void Renderer::DrawAxes(const Scene& scene) {
 		y_pos = Utils::Mult(matrix, vec3(0, size, 0)),
 		z_neg = Utils::Mult(matrix, vec3(0, 0, -size)),
 		z_pos = Utils::Mult(matrix, vec3(0, 0, size));
+
+	// optional grid
+	for (int i = -size; i <=  size; i += size / 8) {
+		glm::vec3
+			x_s = Utils::Mult(matrix, vec3(i, 0, size)),
+			x_e = Utils::Mult(matrix, vec3(i, 0, -size)),
+			z_s = Utils::Mult(matrix, vec3(size, 0, i)),
+			z_e = Utils::Mult(matrix, vec3(-size, 0, i));
+		glm::vec3 color = vec3(0.5, 0.5, 0.5);
+		DrawLine(centerPoint(x_s), centerPoint(x_e), color);
+		DrawLine(centerPoint(z_s), centerPoint(z_e), color);
+	}
 
 	// x axis
 	DrawLine(centerPoint(x_pos), centerPoint(x_neg), vec3(1, 0, 0));
@@ -252,27 +262,27 @@ void Renderer::DrawModel(MeshModel* _model, glm::mat4 matrix) {
 	glm::vec3 min = Utils::Vec3FromVec4(model.GetMin()),
 		max = Utils::Vec3FromVec4(model.GetMax());
 
-	if (model.showBoundingBox)
-		DrawBoundingBox(matrix, min, max);
-
 	for (Face& face : faces) {
 		std::vector<glm::vec3> triangle = Utils::FaceToVertices(face, vertices);
 		std::vector<glm::vec3> verticesNormals = Utils::FaceToNormals(face, normals);
 
 		for (int i = 0; i < 3; i++) {
 			vec3 point = centerPoint(Utils::Mult(matrix, triangle[i]));
-			vec3 normal = Utils::Mult(matrix, verticesNormals[i]);
-			vec3 normalEnd = point + (normal * vec3(0.15));
+			vec3 normal = verticesNormals[i];
+			vec3 normalEnd = centerPoint(Utils::Mult(matrix, triangle[i] + (normal * vec3(0.15))));
 
 			triangle[i] = point;
 			if (model.showVertexNormals)
-				DrawLine(point, normalEnd, vec3(0, 1, 0));
+				DrawLine(point, normalEnd, vec3(0.5, 0.5, 0));
 		}
 
 		DrawTriangle(triangle, modelColor);
 		if (model.showFacesNormals)
 			DrawFaceNormal(triangle, matrix);
 	}
+
+	if (model.showBoundingBox)
+		DrawBoundingBox(matrix, min, max);
 }
 
 void Renderer::Render(const Scene& scene)

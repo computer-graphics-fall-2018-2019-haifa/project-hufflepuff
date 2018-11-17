@@ -45,7 +45,7 @@ public:
 	glm::vec3 centerPoint(glm::vec3 point);
 	glm::vec3 centerPoint(glm::vec4 point);
 	void DrawLine(const vec3& point1, const vec3& point2, const vec3& color);
-	void DrawSquare(vec3 vertices[4]);
+	void DrawSquare(vec3 vertices[4], vec3 color);
 	void DrawBoundingBox(glm::mat4 matrix, glm::vec3 min, glm::vec3 max);
 	void DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3 & color);
 	void DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m);

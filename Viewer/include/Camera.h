@@ -33,6 +33,7 @@ public:
 	~Camera();
 
 	void SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up);
+	void SetWorldTransformation(const glm::mat4x4 & worldTransform);
 	void SetWorldTransformation();
 	void SetCameraLookAt();
 

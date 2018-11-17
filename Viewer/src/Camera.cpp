@@ -31,6 +31,7 @@ void Camera::SetOrthographicProjection()
 
 void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up)
 {
+	this->SetWorldTransformation();
 	glm::vec4 eye4 = Utils::Vec4FromVec3(eye);
 	glm::vec4 at4 = Utils::Vec4FromVec3(at);
 	glm::vec4 up4 = Utils::Vec4FromVec3(up);
@@ -57,9 +58,14 @@ void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const gl
 	this->viewTransformation = c * identity;
 }
 
+void Camera::SetWorldTransformation(const glm::mat4x4& worldTransform)
+{
+	MeshModel::SetWorldTransformation(worldTransform);
+}
+
 void Camera::SetWorldTransformation() {
 	MeshModel::SetWorldTransformation();
-	MeshModel::SetWorldTransformation(glm::inverse(this->GetWorldTransformation()));
+	//MeshModel::SetWorldTransformation(glm::inverse(this->GetWorldTransformation()));
 }
 
 void Camera::SetOrthographicProjection(

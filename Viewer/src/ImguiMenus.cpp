@@ -51,14 +51,16 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
 	{
 		static int counter = 0;
+		Camera* activeCamera = cameras.at(activeCameraIndex);
 
-		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+		if (activeCamera->isOrth)
+			activeCamera->SetOrthographicProjection();
+		else
+			activeCamera->SetPerspectiveProjection();
 
-		//ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-		//ImGui::Checkbox("Demo Window", &showDemoWindow);      // Edit bools storing our window open/close state
-		//ImGui::Checkbox("Another Window", &showAnotherWindow);
+		ImGui::Begin("Mesh Model Viewer!");
 
-		ImGui::ColorEdit3("Background color", (float*)&clearColor); // Edit 3 floats representing a color
+		ImGui::ColorEdit3("BG color", (float*)&clearColor);
 
 		if (ImGui::CollapsingHeader("Models") && modelsAmount > 0) {
 			std::shared_ptr<MeshModel> activeModel = models.at(activeModelIndex);
@@ -69,13 +71,21 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::Combo("Select Model", &scene.activeModelIndex, modelNames, modelsAmount);
 			
 			ImGui::Text("Active Model Preferences");
+			ImGui::SameLine();
+			if (ImGui::Button("Focus")) {
+				glm::mat4 worldTransform = activeModel->GetWorldTransformation();
+				activeCamera->at = activeModel->translation;
+				activeCamera->SetCameraLookAt();
+			}
+			ImGui::ColorEdit3("Color", (float*)&(activeModel->color));
 			ImGui::Checkbox("Vertex Normals", &(activeModel->showVertexNormals));
 			ImGui::Checkbox("Face Normals", &(activeModel->showFacesNormals));
 			ImGui::Checkbox("Bouding Box", &(activeModel->showBoundingBox));
 			ImGui::Separator();
+			ImGui::Text("Scale");
 			ImGui::Checkbox("Lock scale", &lockScale);
 			if (lockScale) {
-				ImGui::SliderFloat("Scale All", &(activeModel->scale.x), 1.0f, 100.0f);
+				ImGui::SliderFloat("Scale all", &(activeModel->scale.x), 1.0f, 100.0f);
 				float x = activeModel->scale.x;
 				activeModel->SetScale({ x, x, x });
 			}
@@ -85,9 +95,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 				ImGui::SliderFloat("Scale Z", &(activeModel->scale.z), 1.0f, 100.0f);
 			}
 
+			ImGui::Separator();
+			ImGui::Text("Rotate");
 			ImGui::Checkbox("Lock rotation", &lockRotation);
 			if (lockRotation) {
-				ImGui::SliderFloat("Rotate All", &(activeModel->rotation.x), 0.0f, 360.0f);
+				ImGui::SliderFloat("Rotate all", &(activeModel->rotation.x), 0.0f, 360.0f);
 				float x = activeModel->rotation.x;
 				activeModel->SetRotation({ x, x, x });
 			}
@@ -97,19 +109,19 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 				ImGui::SliderFloat("Rotate Z", &(activeModel->rotation.z), 0.0f, 360.0f);
 			}
 
-			ImGui::Checkbox("Lock Translation", &lockTranslation);
+			ImGui::Separator();
+			ImGui::Text("Translate");
+			ImGui::Checkbox("Lock translation", &lockTranslation);
 			if (lockTranslation) {
-				ImGui::SliderFloat("Translate All", &(activeModel->translation.x), -100.0f, 100.0f);
+				ImGui::SliderFloat("Trans. all", &(activeModel->translation.x), -100.0f, 100.0f);
 				float x = activeModel->translation.x;
 				activeModel->SetTranslation({ x, x, x });
 			}
 			else {
-				ImGui::SliderFloat("Translate X", &(activeModel->translation.x), -100.0f, 100.0f);
-				ImGui::SliderFloat("Translate Y", &(activeModel->translation.y), -100.0f, 100.0f);
-				ImGui::SliderFloat("Translate Z", &(activeModel->translation.z), -100.0f, 100.0f);
+				ImGui::SliderFloat("Around X", &(activeModel->translation.x), -100.0f, 100.0f);
+				ImGui::SliderFloat("Around Y", &(activeModel->translation.y), -100.0f, 100.0f);
+				ImGui::SliderFloat("Around Z", &(activeModel->translation.z), -100.0f, 100.0f);
 			}
-
-			ImGui::ColorEdit3("Color", (float*)&(activeModel->color));
 
 			activeModel->SetWorldTransformation();
 
@@ -132,7 +144,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			for (int i = 0; i < camerasAmount; i++)
 				cameraNames[i] = const_cast<char*>(cameras[i]->GetModelName().c_str());
 
-			ImGui::Combo("Select Camera", &scene.activeCameraIndex, cameraNames, camerasAmount);
+			ImGui::Combo("Select camera", &scene.activeCameraIndex, cameraNames, camerasAmount);
 
 			ImGui::Text("Active Camera Preferences:");
 			ImGui::SliderFloat("Eye X", &(activeCamera->eye.x), -1000.0f, 1000.0f);
@@ -147,7 +159,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::SliderFloat("Up Y", &(activeCamera->up.y), -100.0f, 100.0f);
 			ImGui::SliderFloat("Up Z", &(activeCamera->up.z), -100.0f, 100.0f);
 			ImGui::Separator();
-			ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 1.0f, 5.0f);
+			ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 1.0f, 3.0f);
 			ImGui::Separator();
 			ImGui::RadioButton("Orthographic", &(activeCamera->isOrth), 1);
 			ImGui::RadioButton("Perspective", &(activeCamera->isOrth), 0);
@@ -163,26 +175,15 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::SliderFloat("Near", &(activeCamera->n), 10.0f, 100.0f);
 			ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
 
-			if (activeCamera->isOrth)
-				activeCamera->SetOrthographicProjection();
-			else {
-				activeCamera->SetPerspectiveProjection();
-			}
-
-			activeCamera->SetCameraLookAt();
 			scene.scale = glm::vec3(activeCamera->zoom);
 			activeCamera->translation = activeCamera->eye;
-			//activeCamera->rotation = activeCamera->at - activeCamera->eye;
+			activeCamera->SetCameraLookAt();
 			activeCamera->SetWorldTransformation();
 			scene.SetWorldTransformation();
 
 			delete[] cameraNames;
 		}
 
-
-		//if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-			//counter++;
-		//ImGui::SameLine();
 		//ImGui::Text("counter = %d", counter);
 
 		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
