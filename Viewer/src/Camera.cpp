@@ -33,23 +33,28 @@ void Camera::SetOrthographicProjection()
 void Camera::SetCameraLookAt(glm::vec3& eye, glm::vec3& at, glm::vec3& up)
 {
 	this->SetWorldTransformation();
-	/*glm::mat4 translationMatrix = Utils::GetTranslationMatrix(translation);
+	glm::mat4 translationMatrix = Utils::GetTranslationMatrix(translation);
 	glm::mat4 rotationMatrix = Utils::GetRotationMatrix(rotation);
-	glm::vec4 eye4 = Utils::Vec4FromVec3(Utils::Mult(translationMatrix, eye));
-	glm::vec4 at4 =  Utils::Vec4FromVec3(Utils::Mult(rotationMatrix, at));
-	glm::vec4 up4 =  Utils::Vec4FromVec3(Utils::Mult(translationMatrix * rotationMatrix, up));*/
 	glm::vec4 eye4 = Utils::Vec4FromVec3(eye);
 	glm::vec4 at4 = Utils::Vec4FromVec3(at);
 	glm::vec4 up4 = Utils::Vec4FromVec3(up);
+	//eye4 = translationMatrix * eye4;
+	at4 = translationMatrix * rotationMatrix * at4;
+	up4 = rotationMatrix * up4;
+	
+	/*eye = Utils::Vec3FromVec4(eye4);
+	at = Utils::Vec3FromVec4(at4);
+	up = Utils::Vec3FromVec4(up4);*/
 
 	glm::vec4 zAxis4 = glm::normalize(eye4 - at4);
-	glm::vec3 zAxis3 = glm::vec3(zAxis4.x, zAxis4.y, zAxis4.z);
+	glm::vec3 zAxis3 = Utils::Vec3FromVec4(zAxis4);
 	glm::vec3 xAxis3 = glm::normalize(glm::cross(Utils::Vec3FromVec4(up4), zAxis3));
 	glm::vec3 yAxis3 = glm::normalize(glm::cross(zAxis3, xAxis3));
 
 	glm::vec4 xAxis4 = Utils::Vec4FromVec3(xAxis3, 0);
 	glm::vec4 yAxis4 = Utils::Vec4FromVec3(yAxis3, 0);
 	glm::vec4 t4 = glm::vec4(0.0, 0.0, 0.0, 1.0);
+	zAxis4 = glm::vec4(zAxis4.x, zAxis4.y, zAxis4.z, 0);
 
 	glm::mat4 c(
 		xAxis4,

@@ -165,86 +165,6 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		}
 
 		ImGui::Separator();
-		//if (ImGui::CollapsingHeader("Cameras") && camerasAmount > 0) {
-		//	Camera* activeCamera = cameras.at(activeCameraIndex);
-		//	if (ImGui::Button("Add Camera")) {
-		//		glm::vec3 eye = activeCamera->eye,
-		//			at = activeCamera->at,
-		//			up = activeCamera->up;
-		//		Camera *c = new Camera(at, eye, up);
-		//		scene.AddCamera(c);
-		//	}
-
-		//	char** cameraNames = new char*[camerasAmount];
-		//	for (int i = 0; i < camerasAmount; i++)
-		//		cameraNames[i] = const_cast<char*>(cameras[i]->GetModelName().c_str());
-
-		//	ImGui::Combo("Select camera", &scene.activeCameraIndex, cameraNames, camerasAmount);
-
-		//	ImGui::Separator();
-		//	ImGui::Text("Rotate");
-		//	ImGui::Checkbox("Lock cam rotation", &lockRotation);
-		//	if (lockRotation) {
-		//		ImGui::SliderFloat("Rotate camera", &(activeCamera->rotation.x), 0.0f, 360.0f);
-		//		float x = activeCamera->rotation.x;
-		//		activeCamera->SetRotation({ x, x, x });
-		//	}
-		//	else {
-		//		ImGui::SliderFloat("Rotate.c X", &(activeCamera->rotation.x), 0.0f, 360.0f);
-		//		ImGui::SliderFloat("Rotate.c Y", &(activeCamera->rotation.y), 0.0f, 360.0f);
-		//		ImGui::SliderFloat("Rotate.c Z", &(activeCamera->rotation.z), 0.0f, 360.0f);
-		//	}
-
-		//	ImGui::Separator();
-		//	ImGui::Text("Translate");
-		//	ImGui::Checkbox("Lock cam translation", &lockTranslation);
-		//	if (lockTranslation) {
-		//		ImGui::SliderFloat("Trans. camera", &(activeCamera->translation.x), -100.0f, 100.0f);
-		//		float x = activeCamera->translation.x;
-		//		activeCamera->SetTranslation({ x, x, x });
-		//	}
-		//	else {
-		//		ImGui::SliderFloat("Around.c X", &(activeCamera->translation.x), -100.0f, 100.0f);
-		//		ImGui::SliderFloat("Around.c Y", &(activeCamera->translation.y), -100.0f, 100.0f);
-		//		ImGui::SliderFloat("Around.c Z", &(activeCamera->translation.z), -100.0f, 100.0f);
-		//	}
-		//	ImGui::Separator();
-		//	ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 1.0f, 3.0f);
-		//	ImGui::Separator();
-		//	ImGui::RadioButton("Orthographic", &(activeCamera->isOrth), 1);
-		//	ImGui::RadioButton("Perspective", &(activeCamera->isOrth), 0);
-
-		//	if (activeCamera->isOrth) {
-		//		ImGui::SliderFloat("Height", &(activeCamera->height), 1.0f, 100.0f);
-		//	}
-		//	else {
-		//		ImGui::SliderFloat("Fovy", &(activeCamera->fovy), 0.0f, 180.0f);
-		//	}
-
-		//	ImGui::Checkbox("Aspect", &(activeCamera->isAspect));
-		//	if (activeCamera->isAspect) {
-		//		ImGui::SliderFloat("Aspect Ratio", &(activeCamera->aspectRatio), 0.1f, 2.0f);
-		//	}
-		//	else {
-		//		ImGui::SliderFloat("Top", &(activeCamera->t), 0.1f, 5.0f);
-		//		ImGui::SliderFloat("Bottom", &(activeCamera->b), -5.0f, -0.1f);
-		//		ImGui::SliderFloat("Right", &(activeCamera->r), 0.1f, 5.0f);
-		//		ImGui::SliderFloat("Left", &(activeCamera->l), -5.0f, -0.1f);
-		//		activeCamera->aspectRatio = (activeCamera->t - activeCamera->b);
-		//		activeCamera->aspectRatio /= (activeCamera->r - activeCamera->l);
-		//	}
-		//	ImGui::SliderFloat("Near", &(activeCamera->n), 10.0f, 100.0f);
-		//	ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
-
-		//	//scene.scale = glm::vec3(activeCamera->zoom);
-		//	//activeCamera->translation = activeCamera->eye;
-		//	activeCamera->SetCameraLookAt();
-		//	//activeCamera->SetWorldTransformation();
-		//	scene.SetWorldTransformation();
-
-		//	delete[] cameraNames;
-		//}
-
 		if (ImGui::CollapsingHeader("Cameras") && camerasAmount > 0) {
 			Camera* activeCamera = cameras.at(activeCameraIndex);
 			if (ImGui::Button("Add Camera")) {
@@ -261,6 +181,12 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 			ImGui::Combo("Select camera", &scene.activeCameraIndex, cameraNames, camerasAmount);
 
+			ImGui::Separator();
+			ImGui::Text("Rotate");
+			ImGui::SliderFloat("Rotate.c X", &(activeCamera->rotation.x), 0.0f, 360.0f);
+			ImGui::SliderFloat("Rotate.c Y", &(activeCamera->rotation.y), 0.0f, 360.0f);
+			ImGui::SliderFloat("Rotate.c Z", &(activeCamera->rotation.z), 0.0f, 360.0f);
+			ImGui::Separator();
 			ImGui::Text("Active Camera Preferences:");
 			ImGui::SliderFloat("Eye X", &(activeCamera->eye.x), -1000.0f, 1000.0f);
 			ImGui::SliderFloat("Eye Y", &(activeCamera->eye.y), -1000.0f, 1000.0f);
@@ -273,6 +199,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::SliderFloat("Up X", &(activeCamera->up.x), -100.0f, 100.0f);
 			ImGui::SliderFloat("Up Y", &(activeCamera->up.y), -100.0f, 100.0f);
 			ImGui::SliderFloat("Up Z", &(activeCamera->up.z), -100.0f, 100.0f);
+
 			ImGui::Separator();
 			ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 1.0f, 3.0f);
 			ImGui::Separator();
@@ -301,13 +228,78 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::SliderFloat("Near", &(activeCamera->n), 10.0f, 100.0f);
 			ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
 
+			//scene.scale = glm::vec3(activeCamera->zoom);
 			activeCamera->translation = activeCamera->eye;
 			activeCamera->SetCameraLookAt();
 			//activeCamera->SetWorldTransformation();
-			scene.SetWorldTransformation();
+			//scene.SetWorldTransformation();
 
 			delete[] cameraNames;
 		}
+
+		//if (ImGui::CollapsingHeader("Cameras") && camerasAmount > 0) {
+		//	Camera* activeCamera = cameras.at(activeCameraIndex);
+		//	if (ImGui::Button("Add Camera")) {
+		//		glm::vec3 eye = activeCamera->eye,
+		//			at = activeCamera->at,
+		//			up = activeCamera->up;
+		//		Camera *c = new Camera(at, eye, up);
+		//		scene.AddCamera(c);
+		//	}
+
+		//	char** cameraNames = new char*[camerasAmount];
+		//	for (int i = 0; i < camerasAmount; i++)
+		//		cameraNames[i] = const_cast<char*>(cameras[i]->GetModelName().c_str());
+
+		//	ImGui::Combo("Select camera", &scene.activeCameraIndex, cameraNames, camerasAmount);
+
+		//	ImGui::Text("Active Camera Preferences:");
+		//	ImGui::SliderFloat("Eye X", &(activeCamera->eye.x), -1000.0f, 1000.0f);
+		//	ImGui::SliderFloat("Eye Y", &(activeCamera->eye.y), -1000.0f, 1000.0f);
+		//	ImGui::SliderFloat("Eye Z", &(activeCamera->eye.z), -1000.0f, 1000.0f);
+		//	ImGui::Separator();
+		//	ImGui::SliderFloat("At X", &(activeCamera->at.x), -100.0f, 100.0f);
+		//	ImGui::SliderFloat("At Y", &(activeCamera->at.y), -100.0f, 100.0f);
+		//	ImGui::SliderFloat("At Z", &(activeCamera->at.z), -100.0f, 100.0f);
+		//	ImGui::Separator();
+		//	ImGui::SliderFloat("Up X", &(activeCamera->up.x), -100.0f, 100.0f);
+		//	ImGui::SliderFloat("Up Y", &(activeCamera->up.y), -100.0f, 100.0f);
+		//	ImGui::SliderFloat("Up Z", &(activeCamera->up.z), -100.0f, 100.0f);
+		//	ImGui::Separator();
+		//	ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 1.0f, 3.0f);
+		//	ImGui::Separator();
+		//	ImGui::RadioButton("Orthographic", &(activeCamera->isOrth), 1);
+		//	ImGui::RadioButton("Perspective", &(activeCamera->isOrth), 0);
+
+		//	if (activeCamera->isOrth) {
+		//		ImGui::SliderFloat("Height", &(activeCamera->height), 1.0f, 100.0f);
+		//	}
+		//	else {
+		//		ImGui::SliderFloat("Fovy", &(activeCamera->fovy), 0.0f, 180.0f);
+		//	}
+
+		//	ImGui::Checkbox("Aspect", &(activeCamera->isAspect));
+		//	if (activeCamera->isAspect) {
+		//		ImGui::SliderFloat("Aspect Ratio", &(activeCamera->aspectRatio), 0.1f, 2.0f);
+		//	}
+		//	else {
+		//		ImGui::SliderFloat("Top", &(activeCamera->t), 0.1f, 5.0f);
+		//		ImGui::SliderFloat("Bottom", &(activeCamera->b), -5.0f, -0.1f);
+		//		ImGui::SliderFloat("Right", &(activeCamera->r), 0.1f, 5.0f);
+		//		ImGui::SliderFloat("Left", &(activeCamera->l), -5.0f, -0.1f);
+		//		activeCamera->aspectRatio = (activeCamera->t - activeCamera->b);
+		//		activeCamera->aspectRatio /= (activeCamera->r - activeCamera->l);
+		//	}
+		//	ImGui::SliderFloat("Near", &(activeCamera->n), 10.0f, 100.0f);
+		//	ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
+
+		//	activeCamera->translation = activeCamera->eye;
+		//	activeCamera->SetCameraLookAt();
+		//	//activeCamera->SetWorldTransformation();
+		//	scene.SetWorldTransformation();
+
+		//	delete[] cameraNames;
+		//}
 
 		//ImGui::Text("counter = %d", counter);
 
