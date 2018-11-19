@@ -216,7 +216,7 @@ void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
 	x_add = (int)(viewportWidth / 2);
 	y_add = (int)(viewportHeight / 2);
 
-	DrawLine(startPoint, endPoint, vec3(0.5, 0, 0.5));
+	DrawLine(startPoint, endPoint, vec3(1, 0, 0));
 }
 
 void Renderer::DrawAxes(const Scene& scene) {

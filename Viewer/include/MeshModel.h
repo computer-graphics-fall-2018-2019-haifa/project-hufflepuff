@@ -24,6 +24,7 @@ public:
 	bool showVertexNormals;
 	bool showFacesNormals;
 	bool showBoundingBox;
+	glm::vec3 avg;
 	glm::vec3 scale;
 	glm::vec3 rotation;
 	glm::vec3 translation;
@@ -35,7 +36,7 @@ public:
 	virtual ~MeshModel();
 
 	void SetWorldTransformation();
-	void SetWorldTransformation(const glm::mat4x4& worldTransform);
+	virtual void SetWorldTransformation(const glm::mat4x4& worldTransform);
 	void SetWorldTransformation(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate);
 	const glm::mat4x4& GetWorldTransformation() const;
 

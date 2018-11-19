@@ -17,6 +17,7 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 	scale({ 1,1,1 }),
 	rotation({ 0,0,0 }),
 	translation({ 0,0,0 }),
+	avg({ 0,0,0 }),
 	showFacesNormals(false),
 	showVertexNormals(false),
 	showBoundingBox(false)
@@ -29,10 +30,13 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 		maxs.y = std::fmax(maxs.y, vertex.y);
 		mins.z = std::fmin(mins.z, vertex.z);
 		maxs.z = std::fmax(maxs.z, vertex.z);
+		avg.x += vertex.x;
+		avg.y += vertex.y;
+		avg.z += vertex.z;
 	}
 
 	color = Utils::GenerateRandomColor();
-
+	avg /= glm::vec3(vertices.size());
 }
 
 MeshModel::MeshModel(const MeshModel& other):
