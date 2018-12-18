@@ -33,12 +33,15 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 {
 	std::vector<std::shared_ptr<MeshModel>> models = scene.GetModels();
 	std::vector<Camera*> cameras = scene.GetCameras();
+	std::vector<Light*> lights = scene.GetLights();
 
 	int activeModelIndex = scene.GetActiveModelIndex();
 	int activeCameraIndex = scene.GetActiveCameraIndex();
+	int activeLightIndex = scene.GetActiveLightIndex();
 
 	int modelsAmount = models.size();
 	int camerasAmount = cameras.size();
+	int lightsAmount = lights.size();
 
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
 	if (showDemoWindow)
@@ -50,7 +53,16 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	{
 		static int counter = 0;
 		static int controlOverModel = 1;
+
 		Camera* activeCamera = cameras.at(activeCameraIndex);
+
+		/*if (ImGui::IsMouseDragging(0)) {
+			static glm::vec3 lastPos = activeCamera->eye;
+			ImVec2 v = ImGui::GetMouseDragDelta();
+			lastPos -= glm::vec3(v.x, v.y, 0);
+			activeCamera->eye = lastPos;
+		}*/
+		
 
 		if (activeCamera->isOrth) {
 			activeCamera->SetOrthographicProjection();
@@ -166,7 +178,6 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 		ImGui::Separator();
 		if (ImGui::CollapsingHeader("Cameras") && camerasAmount > 0) {
-			Camera* activeCamera = cameras.at(activeCameraIndex);
 			if (ImGui::Button("Add Camera")) {
 				glm::vec3 eye = activeCamera->eye,
 					at = activeCamera->at,
@@ -237,73 +248,51 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			delete[] cameraNames;
 		}
 
-		//if (ImGui::CollapsingHeader("Cameras") && camerasAmount > 0) {
-		//	Camera* activeCamera = cameras.at(activeCameraIndex);
-		//	if (ImGui::Button("Add Camera")) {
-		//		glm::vec3 eye = activeCamera->eye,
-		//			at = activeCamera->at,
-		//			up = activeCamera->up;
-		//		Camera *c = new Camera(at, eye, up);
-		//		scene.AddCamera(c);
-		//	}
+		ImGui::Separator();
+		if (ImGui::CollapsingHeader("Lights") && lightsAmount > 0) {
+			Light* activeLight = lights.at(activeLightIndex);
+			if (ImGui::Button("Add Light")) {
+				Light *l = new Light();
+				scene.AddLight(l);
+			}
 
-		//	char** cameraNames = new char*[camerasAmount];
-		//	for (int i = 0; i < camerasAmount; i++)
-		//		cameraNames[i] = const_cast<char*>(cameras[i]->GetModelName().c_str());
+			char** lightNames = new char*[lightsAmount];
+			for (int i = 0; i < lightsAmount; i++)
+				lightNames[i] = const_cast<char*>(lights[i]->GetModelName().c_str());
 
-		//	ImGui::Combo("Select camera", &scene.activeCameraIndex, cameraNames, camerasAmount);
+			ImGui::Combo("Select light", &scene.activeLightIndex, lightNames, lightsAmount);
 
-		//	ImGui::Text("Active Camera Preferences:");
-		//	ImGui::SliderFloat("Eye X", &(activeCamera->eye.x), -1000.0f, 1000.0f);
-		//	ImGui::SliderFloat("Eye Y", &(activeCamera->eye.y), -1000.0f, 1000.0f);
-		//	ImGui::SliderFloat("Eye Z", &(activeCamera->eye.z), -1000.0f, 1000.0f);
-		//	ImGui::Separator();
-		//	ImGui::SliderFloat("At X", &(activeCamera->at.x), -100.0f, 100.0f);
-		//	ImGui::SliderFloat("At Y", &(activeCamera->at.y), -100.0f, 100.0f);
-		//	ImGui::SliderFloat("At Z", &(activeCamera->at.z), -100.0f, 100.0f);
-		//	ImGui::Separator();
-		//	ImGui::SliderFloat("Up X", &(activeCamera->up.x), -100.0f, 100.0f);
-		//	ImGui::SliderFloat("Up Y", &(activeCamera->up.y), -100.0f, 100.0f);
-		//	ImGui::SliderFloat("Up Z", &(activeCamera->up.z), -100.0f, 100.0f);
-		//	ImGui::Separator();
-		//	ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 1.0f, 3.0f);
-		//	ImGui::Separator();
-		//	ImGui::RadioButton("Orthographic", &(activeCamera->isOrth), 1);
-		//	ImGui::RadioButton("Perspective", &(activeCamera->isOrth), 0);
+			ImGui::Separator();
+			ImGui::ColorEdit3("Light color", (float*)&(activeLight->color));
 
-		//	if (activeCamera->isOrth) {
-		//		ImGui::SliderFloat("Height", &(activeCamera->height), 1.0f, 100.0f);
-		//	}
-		//	else {
-		//		ImGui::SliderFloat("Fovy", &(activeCamera->fovy), 0.0f, 180.0f);
-		//	}
+			ImGui::Separator();
+			ImGui::Text("Translate Light");
+			ImGui::SliderFloat("Trans.l X", &(activeLight->translation.x), -400.0f, 400.0f);
+			ImGui::SliderFloat("Trans.l Y", &(activeLight->translation.y), -400.0f, 400.0f);
+			ImGui::SliderFloat("Trans.l Z", &(activeLight->translation.z), -400.0f, 400.0f);
 
-		//	ImGui::Checkbox("Aspect", &(activeCamera->isAspect));
-		//	if (activeCamera->isAspect) {
-		//		ImGui::SliderFloat("Aspect Ratio", &(activeCamera->aspectRatio), 0.1f, 2.0f);
-		//	}
-		//	else {
-		//		ImGui::SliderFloat("Top", &(activeCamera->t), 0.1f, 5.0f);
-		//		ImGui::SliderFloat("Bottom", &(activeCamera->b), -5.0f, -0.1f);
-		//		ImGui::SliderFloat("Right", &(activeCamera->r), 0.1f, 5.0f);
-		//		ImGui::SliderFloat("Left", &(activeCamera->l), -5.0f, -0.1f);
-		//		activeCamera->aspectRatio = (activeCamera->t - activeCamera->b);
-		//		activeCamera->aspectRatio /= (activeCamera->r - activeCamera->l);
-		//	}
-		//	ImGui::SliderFloat("Near", &(activeCamera->n), 10.0f, 100.0f);
-		//	ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
+			ImGui::Separator();
+			ImGui::Text("Reflection:");
+			ImGui::SliderFloat("Ambient ref",  &(activeLight->Ka), 0.0f, 1.0f);
+			ImGui::SliderFloat("Diffuse ref",  &(activeLight->Kd), 0.0f, 1.0f);
+			ImGui::SliderFloat("Specular ref", &(activeLight->Ks), 0.0f, 1.0f);
+			ImGui::SliderFloat("Shiny", &(activeLight->shineOn), 0.0f, 3.0f);
 
-		//	activeCamera->translation = activeCamera->eye;
-		//	activeCamera->SetCameraLookAt();
-		//	//activeCamera->SetWorldTransformation();
-		//	scene.SetWorldTransformation();
+			ImGui::Separator();
+			ImGui::Text("Shading method:");
+			ImGui::RadioButton("Flat", &(activeLight->type), 0);
+			ImGui::RadioButton("Gouraud", &(activeLight->type), 1);
+			ImGui::RadioButton("Phong", &(activeLight->type), 2);
 
-		//	delete[] cameraNames;
-		//}
+			/*ImGui::Separator();
+			ImGui::Text("Light Type:");
+			ImGui::RadioButton("Point",    &(activeLight->type), 0);
+			ImGui::RadioButton("Parallel", &(activeLight->type), 1);*/
 
-		//ImGui::Text("counter = %d", counter);
+			activeLight->location = Utils::Mult(Utils::TransMatricesLight(scene, activeLightIndex), activeLight->translation);
 
-		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			delete[] lightNames;
+		}
 		ImGui::End();
 	}
 

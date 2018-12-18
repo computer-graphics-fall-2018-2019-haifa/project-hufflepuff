@@ -83,6 +83,67 @@ glm::vec3 Utils::Vec3FromVec4(const glm::vec4& v, bool divide) {
 	return glm::vec3(_v.x, _v.y, _v.z);
 }
 
+//double checkSigns(const glm::vec3 p, const glm::vec3 v1, const glm::vec3 v2) {
+//	return (p.x - v2.x) * (v1.y - v2.y) - (v1.x - v2.x) * (p.y - v2.y);
+//}
+
+glm::vec2 Utils::GetBarycentricCoords(glm::vec3 p, std::vector<glm::vec3> vertices) {
+	glm::vec3 v0 = vertices[0],
+		v1 = vertices[1],
+		v2 = vertices[2];
+	glm::vec2 u = v1 - v0;
+	glm::vec2 v = v2 - v0;
+	glm::vec2 w = p - v0;
+
+	double lambda1 = (w.y * v.x - v.y * w.x) / (u.y * v.x - u.x * v.y);
+	double lambda2 = (w.y - lambda1 * u.y) / v.y;
+
+	return glm::vec2(lambda1, lambda2);
+}
+
+bool Utils::InTriangle(glm::vec2 bar) {
+	double x = bar.x,
+		y = bar.y;
+	return x >= 0 && y >= 0 && (x + y) <= 1;
+}
+
+glm::vec3 Utils::CalcFaceNormal(std::vector<glm::vec3> vertices) {
+	glm::vec3 p1 = vertices[0],
+		p2 = vertices[1],
+		p3 = vertices[2];
+	return glm::cross((p2 - p1), (p3 - p1));
+}
+
+bool Utils::OnLine(glm::vec3 p1, glm::vec3 p2, glm::vec3 p) {
+	// returns if p is on the line between p1 and p2
+	glm::vec3 lineVector = glm::normalize(p1 - p2);
+	glm::vec3 pointVector = glm::normalize(p1 - p);
+	return lineVector == pointVector;
+}
+
+double Utils::CalculateZ(double x, double y, std::vector<glm::vec3> vertices) {
+	glm::vec3 v1 = vertices[0],
+		v2 = vertices[1],
+		v3 = vertices[2];
+	/*glm::vec2 u = v2 - v1;
+	glm::vec2 v = v3 - v1;
+	glm::vec2 w = glm::vec3(x,y,0) * v1;
+
+	double lambda1 = (w.y * v.x - v.y * w.x) / (u.y * v.x - u.x * v.y);
+	double lambda2 = (w.y - lambda1 * u.y) / v.y;
+
+	return glm::vec2*/
+
+	glm::vec3 normal = glm::normalize(glm::cross(v2 - v1, v3 - v1));
+	glm::vec3 nNormal = glm::normalize(normal);
+	double a, b, c, d;
+	a = nNormal.x;
+	b = nNormal.y;
+	c = nNormal.z;
+	d = -glm::dot(v1, nNormal);
+	return -(a * x + b * y + d) / c;
+}
+
 glm::mat4 Utils::GetTransformationMatrix(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate) {
 	glm::mat4 scaleMat = GetScaleMatrix(scale);
 	glm::mat4 rotateMat = GetRotationMatrix(rotate);
@@ -165,6 +226,12 @@ glm::mat4 Utils::TransMatricesModel(const Scene & scene, int modelIdx) {
 	return TransMatricesScene(scene) * swtMat * wtMat;
 }
 
+glm::mat4 Utils::TransMatricesLight(const Scene & scene, int lightIdx) {
+	glm::mat4 wtMat = scene.GetLight(lightIdx).GetWorldTransformation(),
+		swtMat = scene.GetWorldTransformation();
+	return TransMatricesScene(scene) * swtMat * wtMat;
+}
+
 glm::mat4 Utils::TransMatricesCamera(const Scene & scene, int cameraIdx) {
 	glm::mat4 wtMat = scene.GetCamera(cameraIdx).GetWorldTransformation(),
 		swtMat = scene.GetWorldTransformation();
@@ -200,10 +267,16 @@ std::vector<glm::vec3> Utils::FaceToNormals(const Face & face, const std::vector
 		j = face.GetNormalIndex(1),
 		k = face.GetNormalIndex(2);
 	std::vector<glm::vec3> v = std::vector<glm::vec3>();
-
-	v.push_back(normals[i - 1]);
-	v.push_back(normals[j - 1]);
-	v.push_back(normals[k - 1]);
+	/*if (i > 0 && j > 0 && k > 0) {*/
+		v.push_back(normals[i - 1]);
+		v.push_back(normals[j - 1]);
+		v.push_back(normals[k - 1]);
+	//}
+	/*else {
+		v.push_back(glm::vec3(1, 0, 0));
+		v.push_back(glm::vec3(1, 0, 0));
+		v.push_back(glm::vec3(1, 0, 0));
+	}*/
 	return v;
 }
 

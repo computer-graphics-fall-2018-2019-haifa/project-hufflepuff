@@ -9,9 +9,15 @@
 #include <vector>
 #include <cmath>
 #include <math.h>
+#include <algorithm>
 
 #define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
+#define ZINDEX(w,x,y) ((x)+(y*w))
+#define FLAT 0
+#define GOURAUD 1
+#define PHONG 2
 
+const double VERYBIG = std::numeric_limits<float>::max();
 typedef glm::vec3 vec3;
 int x_add;
 int y_add;
@@ -34,13 +40,18 @@ Renderer::~Renderer()
 	}
 }
 
-void Renderer::putPixel(int i, int j, const glm::vec3& color)
+void Renderer::putPixel(int x, int y, double z, const glm::vec3& color, bool test)
 {
-	if (i < 0) return; if (i >= viewportWidth) return;
-	if (j < 0) return; if (j >= viewportHeight) return;
-	colorBuffer[INDEX(viewportWidth, i, j, 0)] = color.x;
-	colorBuffer[INDEX(viewportWidth, i, j, 1)] = color.y;
-	colorBuffer[INDEX(viewportWidth, i, j, 2)] = color.z;
+	if (x < 0) return; if (x >= viewportWidth) return;
+	if (y < 0) return; if (y >= viewportHeight) return;
+	int idx = ZINDEX(viewportWidth, x, y);
+	if (!test || z < zBuffer[idx]) {
+		/*std::cout << "hihihi" << std::endl;*/
+		zBuffer[idx] = z;
+		colorBuffer[INDEX(viewportWidth, x, y, 0)] = color.x;
+		colorBuffer[INDEX(viewportWidth, x, y, 1)] = color.y;
+		colorBuffer[INDEX(viewportWidth, x, y, 2)] = color.z;
+	}
 }
 
 void Renderer::createBuffers(int viewportWidth, int viewportHeight)
@@ -49,15 +60,20 @@ void Renderer::createBuffers(int viewportWidth, int viewportHeight)
 	{
 		delete[] colorBuffer;
 	}
+	if (zBuffer) {
+		delete[] zBuffer;
+	}
 
 	colorBuffer = new float[3* viewportWidth * viewportHeight];
+	zBuffer = new float[viewportWidth * viewportHeight];
 	for (int x = 0; x < viewportWidth; x++)
 	{
 		for (int y = 0; y < viewportHeight; y++)
 		{
-			putPixel(x, y, glm::vec3(0.0f, 0.0f, 0.0f));
+			putPixel(x, y, VERYBIG, glm::vec3(0.0f, 0.0f, 0.0f));
 		}
 	}
+	//InitZBuffer();
 }
 
 void Renderer::ClearColorBuffer(const glm::vec3& color)
@@ -66,7 +82,7 @@ void Renderer::ClearColorBuffer(const glm::vec3& color)
 	{
 		for (int j = 0; j < viewportHeight; j++)
 		{
-			putPixel(i, j, color);
+			putPixel(i, j, VERYBIG-1, color, false);
 		}
 	}
 }
@@ -101,6 +117,7 @@ void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& colo
 	float
 		x1 = point1.x,
 		y1 = point1.y,
+		z1 = point2.z,
 		x2 = point2.x,
 		y2 = point2.y;
 
@@ -124,18 +141,17 @@ void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& colo
 	float error = dx / 2.0f;
 	const int ystep = (y1 < y2) ? 1 : -1;
 	int y = (int)y1;
+	double z = point1.z;
 
 	const int maxX = (int)x2;
 
 	for (int x = (int)x1; x<maxX; x++)
 	{
-		if (steep)
-		{
-			putPixel(y, x, color);
+		if (steep) {
+			putPixel(y, x, z1, color);
 		}
-		else
-		{
-			putPixel(x, y, color);
+		else {
+			putPixel(x, y, z1, color);
 		}
 
 		error -= dy;
@@ -189,13 +205,51 @@ void Renderer::DrawBoundingBox(glm::mat4 matrix, glm::vec3 min, glm::vec3 max)
 	DrawSquare(leftSquare, color);
 }
 
-void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3& color) {
+void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3& color, const Scene& scene, std::vector<glm::vec3>& normals, bool isLight) {
 	glm::vec3 p1 = vertices[0],
 		p2 = vertices[1],
 		p3 = vertices[2];
-	DrawLine(p1, p2, color);
-	DrawLine(p1, p3, color);
-	DrawLine(p2, p3, color);
+	int minX = glm::min(p1.x, glm::min(p2.x, p3.x));
+	int minY = glm::min(p1.y, glm::min(p2.y, p3.y));
+	int maxX = glm::max(p1.x, glm::max(p2.x, p3.x));
+	int maxY = glm::max(p1.y, glm::max(p2.y, p3.y));
+	std::vector<Light*> lights = scene.GetLights();
+	glm::vec3 eye = scene.GetActiveCamera().eye;
+	glm::vec3 faceNormal = Utils::CalcFaceNormal(vertices);
+	glm::vec3 verticesNormal = normals[0] + normals[1] + normals[2] / 3.0f;
+
+	for (int x = minX; x <= maxX; x++) {
+		for (int y = minY; y <= maxY; y++) {
+			glm::vec3 pxy(x, y, 0);
+			glm::vec2 bar = Utils::GetBarycentricCoords(pxy, vertices);
+			if (Utils::InTriangle(bar)) {
+				float lambda1 = 1 - bar.x - bar.y;
+				float lambda2 = bar.x;
+				float lambda3 = bar.y;
+				float z = 1 / (lambda1 * (1 / p1.z) + lambda2 * (1 / p2.z) + lambda3 * (1 / p3.z));
+				pxy.z = z;
+
+				glm::vec3 col(0);
+				for (int i = 0; i < lights.size(); i++) {
+					Light* light = lights[i];
+					if (light->type == FLAT)
+						col += light->CalcIllumination(pxy, faceNormal, eye);
+					else if (light->type == GOURAUD) {
+
+					}
+				}
+
+				if (isLight)
+					col = glm::vec3(1);
+
+				float r = glm::min(color.r * col.r, 1.0f);
+				float g = glm::min(color.g * col.g, 1.0f);
+				float b = glm::min(color.b * col.b, 1.0f);
+
+				putPixel(x, y, z, glm::vec3(r,g,b));
+			}
+		}
+	}
 }
 
 void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
@@ -204,8 +258,8 @@ void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
 		p3 = vertices[2],
 		mid = (p1 + p2 + p3) / vec3(3),
 		normal = glm::cross((p2 - p1), (p3 - p1)),
-		startPoint = mid - (normal * vec3(1)),
-		endPoint = mid + (normal * vec3(1));
+		startPoint = mid,
+		endPoint = mid + (normal * vec3(5));
 
 	glm::vec4 endPoint4 = Utils::Vec4FromVec3(endPoint),
 		startPoint4 = Utils::Vec4FromVec3(startPoint);
@@ -230,18 +284,6 @@ void Renderer::DrawAxes(const Scene& scene) {
 		z_neg = Utils::Mult(matrix, vec3(0, 0, -size)),
 		z_pos = Utils::Mult(matrix, vec3(0, 0, size));
 
-	// optional grid
-	for (int i = -size; i <=  size; i += size / 8) {
-		glm::vec3
-			x_s = Utils::Mult(matrix, vec3(i, 0, size)),
-			x_e = Utils::Mult(matrix, vec3(i, 0, -size)),
-			z_s = Utils::Mult(matrix, vec3(size, 0, i)),
-			z_e = Utils::Mult(matrix, vec3(-size, 0, i));
-		glm::vec3 color = vec3(0.5, 0.5, 0.5);
-		DrawLine(centerPoint(x_s), centerPoint(x_e), color);
-		DrawLine(centerPoint(z_s), centerPoint(z_e), color);
-	}
-
 	// x axis
 	DrawLine(centerPoint(x_pos), centerPoint(x_neg), vec3(1, 0, 0));
 
@@ -250,9 +292,21 @@ void Renderer::DrawAxes(const Scene& scene) {
 
 	// z axis
 	DrawLine(centerPoint(z_pos), centerPoint(z_neg), vec3(0, 0, 1));
+
+	// optional grid
+	/*for (int i = -size; i <=  size; i += size / 8) {
+		glm::vec3
+			x_s = Utils::Mult(matrix, vec3(i, 0, size)),
+			x_e = Utils::Mult(matrix, vec3(i, 0, -size)),
+			z_s = Utils::Mult(matrix, vec3(size, 0, i)),
+			z_e = Utils::Mult(matrix, vec3(-size, 0, i));
+		glm::vec3 color = vec3(0.5, 0.5, 0.5);
+		DrawLine(centerPoint(x_s), centerPoint(x_e), color);
+		DrawLine(centerPoint(z_s), centerPoint(z_e), color);
+	}*/
 }
 
-void Renderer::DrawModel(MeshModel* _model, glm::mat4 matrix) {
+void Renderer::DrawModel(const Scene& scene, MeshModel* _model, glm::mat4 matrix, bool lightModel) {
 	MeshModel model = *_model;
 	std::vector<Face> faces = model.GetFaces();
 	std::vector<glm::vec3> vertices = model.GetVertices();
@@ -276,13 +330,24 @@ void Renderer::DrawModel(MeshModel* _model, glm::mat4 matrix) {
 				DrawLine(point, normalEnd, vec3(0.5, 0.5, 0));
 		}
 
-		DrawTriangle(triangle, modelColor);
+		/*Light activeLight = scene.GetLight(scene.GetActiveLightIndex());
+		float ambientStrength = activeLight.strength;
+		vec3 ambient = ambientStrength * activeLight.color;
+		vec3 postLightColor = ambient * modelColor;*/
+
+		//DrawTriangle(triangle, modelColor);
+		DrawTriangle(triangle, modelColor, scene, verticesNormals, lightModel);
 		if (model.showFacesNormals)
 			DrawFaceNormal(triangle, matrix);
 	}
 
 	if (model.showBoundingBox)
 		DrawBoundingBox(matrix, min, max);
+}
+
+void Renderer::InitZBuffer() {
+	for (int i = 0; i < viewportWidth * viewportHeight; i++)
+		zBuffer[i] = INFINITY;
 }
 
 void Renderer::Render(const Scene& scene)
@@ -292,6 +357,7 @@ void Renderer::Render(const Scene& scene)
 	//## Here you should render the scene.       ##
 	//#############################################
 
+	InitZBuffer();
 	x_add = (int)(viewportWidth / 2);
 	y_add = (int)(viewportHeight / 2);
 
@@ -302,13 +368,14 @@ void Renderer::Render(const Scene& scene)
 
 	std::vector<std::shared_ptr<MeshModel>> models = scene.GetModels();
 	std::vector<Camera*> cameras = scene.GetCameras();
+	std::vector<Light*> lights = scene.GetLights();
 
 	// draw models
 	for (int i = 0; i < scene.GetModelCount(); i++) {
 		MeshModel* model = &(*models.at(i));
 		(*model).SetWorldTransformation();
 		glm::mat4 matrix = Utils::TransMatricesModel(scene, i);
-		DrawModel(model, matrix);
+		DrawModel(scene, model, matrix);
 	}
 
 	// draw camera models
@@ -317,7 +384,16 @@ void Renderer::Render(const Scene& scene)
 		MeshModel* model = cameras.at(i);
 		(*model).SetWorldTransformation();
 		glm::mat4 matrix = Utils::TransMatricesCamera(scene, i);
-		DrawModel(model, matrix);
+		DrawModel(scene, model, matrix);
+	}
+
+	// draw lights
+	for (int i = 0; i < scene.GetLightCount(); i++) {
+		//if (i == scene.GetActiveLightIndex()) continue;
+		MeshModel* model = &(*lights.at(i));
+		(*model).SetWorldTransformation();
+		glm::mat4 matrix = Utils::TransMatricesLight(scene, i);
+		DrawModel(scene, model, matrix, true);
 	}
 }
 

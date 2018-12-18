@@ -17,8 +17,6 @@ private:
 	std::vector<glm::vec3> normals;
 	glm::mat4x4 worldTransform;
 	std::string modelName;
-	glm::vec4 mins;
-	glm::vec4 maxs;
 
 public:
 	bool showVertexNormals;
@@ -29,6 +27,8 @@ public:
 	glm::vec3 rotation;
 	glm::vec3 translation;
 	glm::vec4 color;
+	glm::vec4 mins;
+	glm::vec4 maxs;
 
 	MeshModel() {};
 	MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3>& vertices, const std::vector<glm::vec3>& normals, const std::string& modelName = "");

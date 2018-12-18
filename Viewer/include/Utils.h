@@ -24,6 +24,14 @@ public:
 	static glm::vec4 Vec4FromVec3(const glm::vec3& v, const float w = 1.0f);
 	static glm::vec3 Vec3FromVec4(const glm::vec4& v, bool divide = true);
 
+	static glm::vec2 GetBarycentricCoords(glm::vec3 p, std::vector<glm::vec3> vertices);
+
+	static bool InTriangle(glm::vec2 bar);
+
+	static bool OnLine(glm::vec3 p1, glm::vec3 p2, glm::vec3 p);
+
+	static double CalculateZ(double x, double y, std::vector<glm::vec3> vertices);
+
 	static glm::mat4 GetTransformationMatrix(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate);
 	static glm::mat4 GetScaleMatrix(const glm::vec3 s);
 	static glm::mat4 GetTranslationMatrix(const glm::vec3 translationVector);
@@ -31,7 +39,9 @@ public:
 
 	static glm::mat4 TransMatricesScene(const Scene & scene);
 	static glm::mat4 TransMatricesModel(const Scene & scene, int modelIdx = -1);
+	static glm::mat4 TransMatricesLight(const Scene & scene, int lightIdx);
 	static glm::mat4 TransMatricesCamera(const Scene & scene, int cameraIdx = -1);
+	static glm::vec3 CalcFaceNormal(std::vector<glm::vec3> vertices);
 
 	static glm::vec3 Mult(glm::mat4& mat, glm::vec3& point);
 	static glm::vec3 Mult(glm::mat4& mat, glm::vec4& point);

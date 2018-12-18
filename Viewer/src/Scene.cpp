@@ -32,6 +32,22 @@ const int Scene::GetModelCount() const
 	return models.size();
 }
 
+void Scene::AddLight(Light* light)
+{
+	activeLightIndex = GetLightCount();
+	lights.push_back(light);
+	light->SetModelName("lightSource" + std::to_string(activeLightIndex));
+	light->scale = glm::vec3(5);
+
+	/*float theta = glm::angle(camera->at, camera->eye);
+	camera->rotation = glm::vec3(theta);*/
+}
+
+const int Scene::GetLightCount() const
+{
+	return lights.size();
+}
+
 void Scene::AddCamera(Camera* camera)
 {
 	activeCameraIndex = GetCameraCount();
@@ -61,6 +77,11 @@ const int Scene::GetActiveCameraIndex() const
 	return activeCameraIndex;
 }
 
+const int Scene::GetActiveLightIndex() const
+{
+	return activeLightIndex;
+}
+
 void Scene::SetActiveModelIndex(int index)
 {
 	if (index >= 0 && index < models.size())
@@ -83,6 +104,11 @@ std::vector<Camera*> Scene::GetCameras() const
 	return cameras;
 }
 
+std::vector<Light*> Scene::GetLights() const
+{
+	return lights;
+}
+
 const MeshModel& Scene::GetModel(int index) const
 {
 	return *(models.at(index));
@@ -91,6 +117,11 @@ const MeshModel& Scene::GetModel(int index) const
 const Camera & Scene::GetCamera(int index) const
 {
 	return *cameras.at(index);
+}
+
+const Light & Scene::GetLight(int index) const
+{
+	return *lights.at(index);
 }
 
 const MeshModel& Scene::GetActiveModel() const

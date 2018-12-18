@@ -9,6 +9,7 @@
 #include <memory>
 #include "MeshModel.h"
 #include "Camera.h"
+#include "Light.h"
 
 /*
  * Scene class.
@@ -18,6 +19,7 @@ class Scene {
 private:
 	std::vector<std::shared_ptr<MeshModel>> models;
 	std::vector<Camera*> cameras;
+	std::vector<Light*> lights;
 	glm::mat4 worldTransformation;
 
 public:
@@ -26,6 +28,7 @@ public:
 	glm::vec3 translation;
 	int activeCameraIndex;
 	int activeModelIndex;
+	int activeLightIndex;
 
 	Scene();
 	~Scene();
@@ -33,11 +36,16 @@ public:
 	void AddModel(const std::shared_ptr<MeshModel>& model);
 	const int GetModelCount() const;
 
+	void AddLight(Light * light);
+	const int GetLightCount() const;
+
 	void AddCamera(Camera* camera);
 	const int GetCameraCount() const;
 
 	void SetActiveCameraIndex(int index);
 	const int GetActiveCameraIndex() const;
+
+	const int GetActiveLightIndex() const;
 
 	void SetActiveModelIndex(int index);
 	const int GetActiveModelIndex() const;
@@ -45,8 +53,10 @@ public:
 	// Add more methods as needed...
 	std::vector<std::shared_ptr<MeshModel>> GetModels() const;
 	std::vector<Camera*> GetCameras() const;
+	std::vector<Light*> GetLights() const;
 	const MeshModel & GetModel(int index) const;
 	const Camera & GetCamera(int index) const;
+	const Light & GetLight(int index) const;
 	const MeshModel& GetActiveModel() const;
 
 	const Camera& GetActiveCamera() const;
