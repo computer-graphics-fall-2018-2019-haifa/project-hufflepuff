@@ -27,6 +27,7 @@ Renderer::Renderer(int viewportWidth, int viewportHeight, int viewportX, int vie
 	zBuffer(nullptr)
 {
 	initOpenGLRendering();
+	alias = false;
 	SetViewport(viewportWidth, viewportHeight, viewportX, viewportY);
 
 	this->centerAxes = glm::vec3((int)viewportWidth / 2, (int)viewportHeight / 2, 0);
@@ -42,19 +43,20 @@ Renderer::~Renderer()
 
 void Renderer::putPixel(int x, int y, double z, const glm::vec3& color, bool test)
 {
-	if (x < 0) return; if (x >= viewportWidth) return;
-	if (y < 0) return; if (y >= viewportHeight) return;
-	int idx = ZINDEX(viewportWidth, x, y);
+	int w = GetActiveViewportWidth();
+	int h = GetActiveViewportHeight();
+	if (x < 0) return; if (x >= w) return;
+	if (y < 0) return; if (y >= h) return;
+	int idx = ZINDEX(w, x, y);
 	if (!test || z < zBuffer[idx]) {
-		/*std::cout << "hihihi" << std::endl;*/
 		zBuffer[idx] = z;
-		colorBuffer[INDEX(viewportWidth, x, y, 0)] = color.x;
-		colorBuffer[INDEX(viewportWidth, x, y, 1)] = color.y;
-		colorBuffer[INDEX(viewportWidth, x, y, 2)] = color.z;
+		colorBuffer[INDEX(w, x, y, 0)] = color.x;
+		colorBuffer[INDEX(w, x, y, 1)] = color.y;
+		colorBuffer[INDEX(w, x, y, 2)] = color.z;
 	}
 }
 
-void Renderer::createBuffers(int viewportWidth, int viewportHeight)
+void Renderer::createBuffers(int viewportWidth, int viewportHeight, glm::vec3 color)
 {
 	if (colorBuffer)
 	{
@@ -70,17 +72,28 @@ void Renderer::createBuffers(int viewportWidth, int viewportHeight)
 	{
 		for (int y = 0; y < viewportHeight; y++)
 		{
-			putPixel(x, y, VERYBIG, glm::vec3(0.0f, 0.0f, 0.0f));
+			putPixel(x, y, VERYBIG, color);
 		}
 	}
-	//InitZBuffer();
+}
+
+int Renderer::GetActiveViewportWidth()
+{
+	return alias ? aliasViewportWidth : viewportWidth;
+}
+
+int Renderer::GetActiveViewportHeight()
+{
+	return alias ? aliasViewportHeight : viewportHeight;
 }
 
 void Renderer::ClearColorBuffer(const glm::vec3& color)
 {
-	for (int i = 0; i < viewportWidth; i++)
+	int w = GetActiveViewportWidth();
+	int h = GetActiveViewportHeight();
+	for (int i = 0; i < w; i++)
 	{
-		for (int j = 0; j < viewportHeight; j++)
+		for (int j = 0; j < h; j++)
 		{
 			putPixel(i, j, VERYBIG-1, color, false);
 		}
@@ -93,13 +106,26 @@ void Renderer::SetViewport(int viewportWidth, int viewportHeight, int viewportX,
 	this->viewportY = viewportY;
 	this->viewportWidth = viewportWidth;
 	this->viewportHeight = viewportHeight;
-	createBuffers(viewportWidth, viewportHeight);
-	createOpenGLBuffer();
-
 	int x_add = (int)(viewportWidth / 2);
 	int y_add = (int)(viewportHeight / 2);
 
+	if (alias) {
+		this->aliasViewportWidth = this->viewportWidth * 2;
+		this->aliasViewportHeight = this->viewportHeight * 2;
+		createBuffers(this->aliasViewportWidth, this->aliasViewportHeight);
+		x_add *= 2; y_add *= 2;
+	}
+	else {
+		createBuffers(this->viewportWidth, this->viewportHeight);
+	}
+	createOpenGLBuffer();
+
 	centerAxes = vec3(x_add, y_add, 0);
+}
+
+void Renderer::SetViewport()
+{
+	SetViewport(this->viewportWidth, this->viewportHeight);
 }
 
 glm::vec3 Renderer::centerPoint(glm::vec3 point)
@@ -205,18 +231,59 @@ void Renderer::DrawBoundingBox(glm::mat4 matrix, glm::vec3 min, glm::vec3 max)
 	DrawSquare(leftSquare, color);
 }
 
-void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3& color, const Scene& scene, std::vector<glm::vec3>& normals, bool isLight) {
+glm::vec3 Renderer::CalcIllumination(Light& light, glm::vec3 p, glm::vec3 normal, glm::vec3 eye)
+{
+	glm::vec3 l = light.location,
+		lightVector = light.isPoint ? glm::normalize(p - l) : glm::normalize(-l),
+		mirror = 2.0f * (glm::dot(normal, lightVector)) - lightVector,
+		lookDirection = -glm::normalize(p - eye);
+	float brightness = glm::max(glm::dot(normal, lightVector), 0.0f);
+	float cosPhi = glm::dot(lookDirection, mirror);
+	glm::vec3 illumination;
+
+	light.ambient = light.Ka * light.color;
+	light.diffuse = light.Kd * brightness * light.color;
+	light.specular = light.Ks * pow(cosPhi, light.shineOn) * light.color;
+
+	illumination = light.ambient + light.diffuse + light.specular;
+
+	if (fogActivated)
+		illumination = applyFog(illumination, p.z);
+
+	return illumination;
+}
+
+glm::vec3 Renderer::applyFog(glm::vec3& color, float currentZ) {
+	glm::vec3 fogColor(0.8353f, 0.7804f, 0.9098f);
+	float zStart = 200, zEnd = 400;
+	float density = 0.2;
+	float fogFactor = exp(-abs(currentZ) * density);
+	fogFactor = glm::clamp(fogFactor, 0.0f, 1.0f);
+	
+	return glm::mix(fogColor, color, fogFactor);
+}
+
+void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, MeshModel* model, const Scene& scene, bool isLight) {
 	glm::vec3 p1 = vertices[0],
 		p2 = vertices[1],
 		p3 = vertices[2];
-	int minX = glm::min(p1.x, glm::min(p2.x, p3.x));
-	int minY = glm::min(p1.y, glm::min(p2.y, p3.y));
-	int maxX = glm::max(p1.x, glm::max(p2.x, p3.x));
-	int maxY = glm::max(p1.y, glm::max(p2.y, p3.y));
+	int minX = glm::min(p1.x, glm::min(p2.x, p3.x)),
+		minY = glm::min(p1.y, glm::min(p2.y, p3.y)),
+		maxX = glm::max(p1.x, glm::max(p2.x, p3.x)),
+		maxY = glm::max(p1.y, glm::max(p2.y, p3.y));
 	std::vector<Light*> lights = scene.GetLights();
 	glm::vec3 eye = scene.GetActiveCamera().eye;
 	glm::vec3 faceNormal = Utils::CalcFaceNormal(vertices);
-	glm::vec3 verticesNormal = normals[0] + normals[1] + normals[2] / 3.0f;
+	glm::vec3 c1 = model->color,
+		c2 = model->color2;
+	glm::vec3 p1Color = vec3(0), p2Color = vec3(0), p3Color = vec3(0);
+
+	for (int i = 0; i < lights.size(); i++) {
+		Light* light = lights[i];
+		p1Color += CalcIllumination(*light, p1, normals[0], eye) * c1;
+		p2Color += CalcIllumination(*light, p2, normals[1], eye) * c1;
+		p3Color += CalcIllumination(*light, p3, normals[2], eye) * c1;
+	}
 
 	for (int x = minX; x <= maxX; x++) {
 		for (int y = minY; y <= maxY; y++) {
@@ -228,23 +295,26 @@ void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3& color, 
 				float lambda3 = bar.y;
 				float z = 1 / (lambda1 * (1 / p1.z) + lambda2 * (1 / p2.z) + lambda3 * (1 / p3.z));
 				pxy.z = z;
+				glm::vec3 gouraudColor = (lambda1 * p1Color + lambda2 * p2Color + lambda3 * p3Color);
+				glm::vec3 normalush = -glm::normalize(lambda1 * normals[0] + lambda2 * normals[1] + lambda3 * normals[2]);
+				glm::vec3 finalColor = (scene.shadingType == GOURAUD) ? gouraudColor : c1;
+				glm::vec3 finalNormal = (scene.shadingType == FLAT) ? faceNormal : normalush;
 
-				glm::vec3 col(0);
+				glm::vec3 illumination(0);
 				for (int i = 0; i < lights.size(); i++) {
 					Light* light = lights[i];
-					if (light->type == FLAT)
-						col += light->CalcIllumination(pxy, faceNormal, eye);
-					else if (light->type == GOURAUD) {
-
-					}
+					illumination += CalcIllumination(*light, pxy, finalNormal, eye);
 				}
 
-				if (isLight)
-					col = glm::vec3(1);
+				if (!model->uniformMaterial)
+					finalColor = Utils::GetMarbleColor(lambda1 + lambda3, c1, c2);
 
-				float r = glm::min(color.r * col.r, 1.0f);
-				float g = glm::min(color.g * col.g, 1.0f);
-				float b = glm::min(color.b * col.b, 1.0f);
+				if (isLight)
+					illumination = glm::vec3(1);
+
+				float r = glm::min(finalColor.r * illumination.r, 1.0f);
+				float g = glm::min(finalColor.g * illumination.g, 1.0f);
+				float b = glm::min(finalColor.b * illumination.b, 1.0f);
 
 				putPixel(x, y, z, glm::vec3(r,g,b));
 			}
@@ -260,6 +330,8 @@ void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
 		normal = glm::cross((p2 - p1), (p3 - p1)),
 		startPoint = mid,
 		endPoint = mid + (normal * vec3(5));
+	int w = GetActiveViewportWidth();
+	int h = GetActiveViewportHeight();
 
 	glm::vec4 endPoint4 = Utils::Vec4FromVec3(endPoint),
 		startPoint4 = Utils::Vec4FromVec3(startPoint);
@@ -267,8 +339,8 @@ void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
 	endPoint = Utils::Vec3FromVec4(endPoint4);
 	startPoint = Utils::Vec3FromVec4(startPoint4);
 
-	x_add = (int)(viewportWidth / 2);
-	y_add = (int)(viewportHeight / 2);
+	x_add = (int)(w / 2);
+	y_add = (int)(h / 2);
 
 	DrawLine(startPoint, endPoint, vec3(1, 0, 0));
 }
@@ -293,17 +365,17 @@ void Renderer::DrawAxes(const Scene& scene) {
 	// z axis
 	DrawLine(centerPoint(z_pos), centerPoint(z_neg), vec3(0, 0, 1));
 
-	// optional grid
-	/*for (int i = -size; i <=  size; i += size / 8) {
-		glm::vec3
-			x_s = Utils::Mult(matrix, vec3(i, 0, size)),
-			x_e = Utils::Mult(matrix, vec3(i, 0, -size)),
-			z_s = Utils::Mult(matrix, vec3(size, 0, i)),
-			z_e = Utils::Mult(matrix, vec3(-size, 0, i));
-		glm::vec3 color = vec3(0.5, 0.5, 0.5);
-		DrawLine(centerPoint(x_s), centerPoint(x_e), color);
-		DrawLine(centerPoint(z_s), centerPoint(z_e), color);
-	}*/
+	//// optional grid
+	//for (int i = -size; i <= size; i += size / 8) {
+	//	glm::vec3
+	//		x_s = Utils::Mult(matrix, vec3(i, 0, size)),
+	//		x_e = Utils::Mult(matrix, vec3(i, 0, -size)),
+	//		z_s = Utils::Mult(matrix, vec3(size, 0, i)),
+	//		z_e = Utils::Mult(matrix, vec3(-size, 0, i));
+	//	glm::vec3 color = vec3(0.5, 0.5, 0.5);
+	//	DrawLine(centerPoint(x_s), centerPoint(x_e), color);
+	//	DrawLine(centerPoint(z_s), centerPoint(z_e), color);
+	//}
 }
 
 void Renderer::DrawModel(const Scene& scene, MeshModel* _model, glm::mat4 matrix, bool lightModel) {
@@ -311,7 +383,6 @@ void Renderer::DrawModel(const Scene& scene, MeshModel* _model, glm::mat4 matrix
 	std::vector<Face> faces = model.GetFaces();
 	std::vector<glm::vec3> vertices = model.GetVertices();
 	std::vector<glm::vec3> normals = model.GetNormals();
-	vec3 modelColor = Utils::Vec3FromVec4(model.color, false);
 
 	glm::vec3 min = Utils::Vec3FromVec4(model.GetMin()),
 		max = Utils::Vec3FromVec4(model.GetMax());
@@ -330,13 +401,7 @@ void Renderer::DrawModel(const Scene& scene, MeshModel* _model, glm::mat4 matrix
 				DrawLine(point, normalEnd, vec3(0.5, 0.5, 0));
 		}
 
-		/*Light activeLight = scene.GetLight(scene.GetActiveLightIndex());
-		float ambientStrength = activeLight.strength;
-		vec3 ambient = ambientStrength * activeLight.color;
-		vec3 postLightColor = ambient * modelColor;*/
-
-		//DrawTriangle(triangle, modelColor);
-		DrawTriangle(triangle, modelColor, scene, verticesNormals, lightModel);
+		DrawTriangle(triangle, verticesNormals, _model, scene, lightModel);
 		if (model.showFacesNormals)
 			DrawFaceNormal(triangle, matrix);
 	}
@@ -346,7 +411,9 @@ void Renderer::DrawModel(const Scene& scene, MeshModel* _model, glm::mat4 matrix
 }
 
 void Renderer::InitZBuffer() {
-	for (int i = 0; i < viewportWidth * viewportHeight; i++)
+	int w = GetActiveViewportWidth();
+	int h = GetActiveViewportHeight();
+	for (int i = 0; i < w * h; i++)
 		zBuffer[i] = INFINITY;
 }
 
@@ -356,10 +423,12 @@ void Renderer::Render(const Scene& scene)
 	//## You should override this implementation ##
 	//## Here you should render the scene.       ##
 	//#############################################
-
+	int w = GetActiveViewportWidth();
+	int h = GetActiveViewportHeight();
 	InitZBuffer();
-	x_add = (int)(viewportWidth / 2);
-	y_add = (int)(viewportHeight / 2);
+	x_add = (int)(w / 2);
+	y_add = (int)(h / 2);
+	fogActivated = scene.fogActivated;
 
 	centerAxes = vec3(x_add, y_add, 0);
 
@@ -389,7 +458,6 @@ void Renderer::Render(const Scene& scene)
 
 	// draw lights
 	for (int i = 0; i < scene.GetLightCount(); i++) {
-		//if (i == scene.GetActiveLightIndex()) continue;
 		MeshModel* model = &(*lights.at(i));
 		(*model).SetWorldTransformation();
 		glm::mat4 matrix = Utils::TransMatricesLight(scene, i);
@@ -491,14 +559,36 @@ void Renderer::createOpenGLBuffer()
 
 void Renderer::SwapBuffers()
 {
+	float* tempBuffer = colorBuffer;
 	// Makes GL_TEXTURE0 the current active texture unit
 	glActiveTexture(GL_TEXTURE0);
 
 	// Makes glScreenTex (which was allocated earlier) the current texture.
 	glBindTexture(GL_TEXTURE_2D, glScreenTex);
 
+	if (alias) {
+		tempBuffer = new float[3 * viewportWidth * viewportHeight];
+		//InitZBuffer();
+		int idx;
+		for (int x = 0; x < viewportWidth; x++) {
+			for (int y = 0; y < viewportHeight; y++) {
+				int nw = INDEX(aliasViewportWidth, 2 * x, 2 * y, 0),
+					ne = INDEX(aliasViewportWidth, 2 * x + 1, 2 * y, 0),
+					sw = INDEX(aliasViewportWidth, 2 * x, 2 * y + 1, 0),
+					se = INDEX(aliasViewportWidth, 2 * x + 1, 2 * y + 1, 0);
+				tempBuffer[INDEX(viewportWidth, x, y, 0)] = (colorBuffer[nw + 0] + colorBuffer[ne + 0] + colorBuffer[sw + 0] + colorBuffer[se + 0]) / 4;
+				tempBuffer[INDEX(viewportWidth, x, y, 1)] = (colorBuffer[nw + 1] + colorBuffer[ne + 1] + colorBuffer[sw + 1] + colorBuffer[se + 1]) / 4;
+				tempBuffer[INDEX(viewportWidth, x, y, 2)] = (colorBuffer[nw + 2] + colorBuffer[ne + 2] + colorBuffer[sw + 2] + colorBuffer[se + 2]) / 4;
+			}
+		}
+	}
+
 	// memcopy's colorBuffer into the gpu.
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewportWidth, viewportHeight, GL_RGB, GL_FLOAT, colorBuffer);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewportWidth, viewportHeight, GL_RGB, GL_FLOAT, tempBuffer);
+
+	if (alias) {
+		delete[] tempBuffer;
+	}
 
 	// Tells opengl to use mipmapping
 	glGenerateMipmap(GL_TEXTURE_2D);

@@ -20,9 +20,14 @@ private:
 	int viewportHeight;
 	int viewportX;
 	int viewportY;
+	int aliasViewportWidth;
+	int aliasViewportHeight;
+	bool fogActivated;
 
 	void putPixel(int x, int y, double z, const glm::vec3& color, bool test = true);
-	void createBuffers(int viewportWidth, int viewportHeight);
+	void createBuffers(int viewportWidth, int viewportHeight, glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f));
+	int GetActiveViewportWidth();
+	int GetActiveViewportHeight();
 
 	GLuint glScreenTex;
 	GLuint glScreenVtc;
@@ -33,6 +38,8 @@ private:
 	glm::vec3 centerAxes;
 
 public:
+	bool alias;
+
 	Renderer(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
 	~Renderer();
 
@@ -40,6 +47,7 @@ public:
 	void SwapBuffers();
 	void ClearColorBuffer(const glm::vec3& color);
 	void SetViewport(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
+	void SetViewport();
 
 	// Add more methods/functionality as needed...
 	glm::vec3 centerPoint(glm::vec3 point);
@@ -47,7 +55,9 @@ public:
 	void DrawLine(const vec3& point1, const vec3& point2, const vec3& color);
 	void DrawSquare(vec3 vertices[4], vec3 color);
 	void DrawBoundingBox(glm::mat4 matrix, glm::vec3 min, glm::vec3 max);
-	void DrawTriangle(std::vector<glm::vec3>& vertices, glm::vec3 & color, const Scene & scene, std::vector<glm::vec3>& normals, bool isLight);
+	glm::vec3 CalcIllumination(Light& light, glm::vec3 p, glm::vec3 normal, glm::vec3 eye);
+	glm::vec3 applyFog(glm::vec3 & color, float currentZ);
+	void DrawTriangle(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, MeshModel* model, const Scene & scene, bool isLight);
 	void DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m);
 	void DrawAxes(const Scene & scene);
 	void DrawModel(const Scene& scene, MeshModel* model, glm::mat4 matrix, bool lightModel = false);
