@@ -28,10 +28,6 @@ public:
 
 	static bool InTriangle(glm::vec2 bar);
 
-	static bool OnLine(glm::vec3 p1, glm::vec3 p2, glm::vec3 p);
-
-	static double CalculateZ(double x, double y, std::vector<glm::vec3> vertices);
-
 	static glm::mat4 GetTransformationMatrix(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate);
 	static glm::mat4 GetScaleMatrix(const glm::vec3 s);
 	static glm::mat4 GetTranslationMatrix(const glm::vec3 translationVector);
@@ -47,6 +43,7 @@ public:
 	static glm::vec3 Mult(glm::mat4& mat, glm::vec4& point);
 
 	static std::vector<glm::vec3> FaceToVertices(const Face& face, const std::vector<glm::vec3>& vertices);
+	static glm::vec3 GetMarbleColor(float x, glm::vec3 c1, glm::vec3 c2);
 	static std::vector<glm::vec3> FaceToNormals(const Face& face, const std::vector<glm::vec3>& normals);
 
 	static glm::vec4 GenerateRandomColor();
