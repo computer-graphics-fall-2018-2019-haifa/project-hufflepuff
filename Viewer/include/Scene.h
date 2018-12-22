@@ -29,6 +29,8 @@ public:
 	int activeCameraIndex;
 	int activeModelIndex;
 	int activeLightIndex;
+	int shadingType;
+	bool fogActivated;
 
 	Scene();
 	~Scene();

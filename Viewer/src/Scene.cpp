@@ -10,7 +10,9 @@ Scene::Scene() :
 	worldTransformation(glm::mat4(1)),
 	scale({ 1, 1, 1 }),
 	rotation({ 0, 0, 0 }),
-	translation({ 0, 0, 0 })
+	translation({ 0, 0, 0 }),
+	shadingType(1),
+	fogActivated(false)
 {
 
 }
@@ -37,7 +39,7 @@ void Scene::AddLight(Light* light)
 	activeLightIndex = GetLightCount();
 	lights.push_back(light);
 	light->SetModelName("lightSource" + std::to_string(activeLightIndex));
-	light->scale = glm::vec3(5);
+	light->scale = glm::vec3(0.5f);
 
 	/*float theta = glm::angle(camera->at, camera->eye);
 	camera->rotation = glm::vec3(theta);*/
@@ -55,8 +57,8 @@ void Scene::AddCamera(Camera* camera)
 	camera->SetModelName("camera" + std::to_string(activeCameraIndex));
 	camera->scale = glm::vec3(15);
 
-	float theta = glm::angle(camera->at, camera->eye);
-	camera->rotation = glm::vec3(theta);
+	//float theta = glm::angle(camera->at, camera->eye);
+	//camera->rotation = glm::vec3(0);
 }
 
 const int Scene::GetCameraCount() const
