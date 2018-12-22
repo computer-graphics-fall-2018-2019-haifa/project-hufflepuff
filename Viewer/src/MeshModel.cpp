@@ -20,7 +20,8 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 	avg({ 0,0,0 }),
 	showFacesNormals(false),
 	showVertexNormals(false),
-	showBoundingBox(false)
+	showBoundingBox(false),
+	uniformMaterial(true)
 {
 	for (glm::vec3 vertex : vertices)
 	{
@@ -36,7 +37,9 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 	}
 
 	color = Utils::GenerateRandomColor();
+	color2 = Utils::GenerateRandomColor();
 	avg /= glm::vec3(vertices.size());
+	location = translation;
 }
 
 MeshModel::MeshModel(const MeshModel& other):
@@ -53,7 +56,9 @@ MeshModel::MeshModel(const MeshModel& other):
 	showFacesNormals(other.showFacesNormals),
 	showVertexNormals(other.showVertexNormals),
 	showBoundingBox(other.showBoundingBox),
-	color(other.color)
+	uniformMaterial(other.uniformMaterial),
+	color(other.color),
+	color2(other.color2)
 {
 }
 

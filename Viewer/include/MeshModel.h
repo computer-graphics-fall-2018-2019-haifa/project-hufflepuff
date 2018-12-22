@@ -22,11 +22,14 @@ public:
 	bool showVertexNormals;
 	bool showFacesNormals;
 	bool showBoundingBox;
+	bool uniformMaterial;
 	glm::vec3 avg;
 	glm::vec3 scale;
 	glm::vec3 rotation;
 	glm::vec3 translation;
+	glm::vec3 location;
 	glm::vec4 color;
+	glm::vec4 color2;
 	glm::vec4 mins;
 	glm::vec4 maxs;
 
