@@ -29,7 +29,7 @@ const glm::vec4& GetClearColor()
 	return clearColor;
 }
 
-void DrawImguiMenus(ImGuiIO& io, Scene& scene)
+void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 {
 	std::vector<std::shared_ptr<MeshModel>> models = scene.GetModels();
 	std::vector<Camera*> cameras = scene.GetCameras();
@@ -55,14 +55,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		static int controlOverModel = 1;
 
 		Camera* activeCamera = cameras.at(activeCameraIndex);
-
-		/*if (ImGui::IsMouseDragging(0)) {
-			static glm::vec3 lastPos = activeCamera->eye;
-			ImVec2 v = ImGui::GetMouseDragDelta();
-			lastPos -= glm::vec3(v.x, v.y, 0);
-			activeCamera->eye = lastPos;
-		}*/
-		
+		Light* activeLight = lights.at(activeLightIndex);
 
 		if (activeCamera->isOrth) {
 			activeCamera->SetOrthographicProjection();
@@ -74,6 +67,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		ImGui::Begin("Mesh Model Viewer!");
 
 		ImGui::ColorEdit3("BG color", (float*)&clearColor);
+		if (ImGui::Button("Toggle anti-aliasing")) {
+			renderer.alias = !renderer.alias;
+			renderer.SetViewport();
+			activeCamera->zoom *= renderer.alias ? 2 : 0.5;
+		}
 
 		if (ImGui::CollapsingHeader("Models") && modelsAmount > 0) {
 			std::shared_ptr<MeshModel> activeModel = models.at(activeModelIndex);
@@ -90,10 +88,17 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 				activeCamera->at = activeModel->translation;
 				activeCamera->SetCameraLookAt();
 			}
-			ImGui::ColorEdit3("Color", (float*)&(activeModel->color));
+			
+			ImGui::Checkbox("Uniform Material", &(activeModel->uniformMaterial));
 			ImGui::Checkbox("Vertex Normals", &(activeModel->showVertexNormals));
 			ImGui::Checkbox("Face Normals", &(activeModel->showFacesNormals));
 			ImGui::Checkbox("Bouding Box", &(activeModel->showBoundingBox));
+
+			ImGui::ColorEdit3("Color", (float*)&(activeModel->color));
+			if (!activeModel->uniformMaterial) {
+				ImGui::ColorEdit3("2nd Color", (float*)&(activeModel->color2));
+			}
+
 			ImGui::Separator();
 			ImGui::Text("Control over:");
 			ImGui::RadioButton("Model", &(controlOverModel), 1);
@@ -131,14 +136,14 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 				ImGui::Text("Translate");
 				ImGui::Checkbox("Lock translation", &lockTranslation);
 				if (lockTranslation) {
-					ImGui::SliderFloat("Trans. all", &(activeModel->translation.x), -100.0f, 100.0f);
+					ImGui::SliderFloat("Trans. all", &(activeModel->translation.x), -400.0f, 400.0f);
 					float x = activeModel->translation.x;
 					activeModel->SetTranslation({ x, x, x });
 				}
 				else {
-					ImGui::SliderFloat("Around X", &(activeModel->translation.x), -100.0f, 100.0f);
-					ImGui::SliderFloat("Around Y", &(activeModel->translation.y), -100.0f, 100.0f);
-					ImGui::SliderFloat("Around Z", &(activeModel->translation.z), -100.0f, 100.0f);
+					ImGui::SliderFloat("Around X", &(activeModel->translation.x), -400.0f, 400.0f);
+					ImGui::SliderFloat("Around Y", &(activeModel->translation.y), -400.0f, 400.0f);
+					ImGui::SliderFloat("Around Z", &(activeModel->translation.z), -400.0f, 400.0f);
 				}
 			}
 			else {
@@ -192,11 +197,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 			ImGui::Combo("Select camera", &scene.activeCameraIndex, cameraNames, camerasAmount);
 
-			ImGui::Separator();
-			ImGui::Text("Rotate");
+			//ImGui::Separator();
+			/*ImGui::Text("Rotate");
 			ImGui::SliderFloat("Rotate.c X", &(activeCamera->rotation.x), 0.0f, 360.0f);
 			ImGui::SliderFloat("Rotate.c Y", &(activeCamera->rotation.y), 0.0f, 360.0f);
-			ImGui::SliderFloat("Rotate.c Z", &(activeCamera->rotation.z), 0.0f, 360.0f);
+			ImGui::SliderFloat("Rotate.c Z", &(activeCamera->rotation.z), 0.0f, 360.0f);*/
 			ImGui::Separator();
 			ImGui::Text("Active Camera Preferences:");
 			ImGui::SliderFloat("Eye X", &(activeCamera->eye.x), -1000.0f, 1000.0f);
@@ -239,9 +244,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::SliderFloat("Near", &(activeCamera->n), 10.0f, 100.0f);
 			ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
 
-			//scene.scale = glm::vec3(activeCamera->zoom);
 			activeCamera->translation = activeCamera->eye;
-			activeCamera->SetCameraLookAt();
+			activeCamera->location = Utils::Mult(Utils::TransMatricesCamera(scene, activeCameraIndex), activeCamera->translation);
 			//activeCamera->SetWorldTransformation();
 			//scene.SetWorldTransformation();
 
@@ -266,6 +270,20 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::ColorEdit3("Light color", (float*)&(activeLight->color));
 
 			ImGui::Separator();
+			ImGui::Text("Shading method:");
+			ImGui::RadioButton("Flat", &(scene.shadingType), 0);
+			ImGui::RadioButton("Gouraud", &(scene.shadingType), 1);
+			ImGui::RadioButton("Phong", &(scene.shadingType), 2);
+
+			ImGui::Separator();
+			ImGui::Checkbox("Fog", &(scene.fogActivated));
+
+			ImGui::Separator();
+			ImGui::Text("Light type:");
+			ImGui::RadioButton("Point", &(activeLight->isPoint), 1);
+			ImGui::RadioButton("Parallel", &(activeLight->isPoint), 0);
+
+			ImGui::Separator();
 			ImGui::Text("Translate Light");
 			ImGui::SliderFloat("Trans.l X", &(activeLight->translation.x), -400.0f, 400.0f);
 			ImGui::SliderFloat("Trans.l Y", &(activeLight->translation.y), -400.0f, 400.0f);
@@ -273,26 +291,17 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 			ImGui::Separator();
 			ImGui::Text("Reflection:");
-			ImGui::SliderFloat("Ambient ref",  &(activeLight->Ka), 0.0f, 1.0f);
-			ImGui::SliderFloat("Diffuse ref",  &(activeLight->Kd), 0.0f, 1.0f);
-			ImGui::SliderFloat("Specular ref", &(activeLight->Ks), 0.0f, 1.0f);
-			ImGui::SliderFloat("Shiny", &(activeLight->shineOn), 0.0f, 3.0f);
-
-			ImGui::Separator();
-			ImGui::Text("Shading method:");
-			ImGui::RadioButton("Flat", &(activeLight->type), 0);
-			ImGui::RadioButton("Gouraud", &(activeLight->type), 1);
-			ImGui::RadioButton("Phong", &(activeLight->type), 2);
-
-			/*ImGui::Separator();
-			ImGui::Text("Light Type:");
-			ImGui::RadioButton("Point",    &(activeLight->type), 0);
-			ImGui::RadioButton("Parallel", &(activeLight->type), 1);*/
-
-			activeLight->location = Utils::Mult(Utils::TransMatricesLight(scene, activeLightIndex), activeLight->translation);
+			ImGui::SliderFloat("Ambient",  &(activeLight->Ka), 0.0f, 1.0f);
+			ImGui::SliderFloat("Diffuse",  &(activeLight->Kd), 0.0f, 1.0f);
+			ImGui::SliderFloat("Specular", &(activeLight->Ks), 0.0f, 1.0f);
+			ImGui::Text("Specular option:");
+			ImGui::SliderInt("Alpha", &(activeLight->shineOn), 1, 500);
 
 			delete[] lightNames;
 		}
+		activeCamera->SetCameraLookAt();
+		activeLight->location = Utils::Mult(Utils::TransMatricesLight(scene, activeLightIndex), activeLight->translation);
+		activeLight->SetWorldTransformation();
 		ImGui::End();
 	}
 
