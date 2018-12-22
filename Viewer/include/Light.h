@@ -8,15 +8,11 @@ public:
 	glm::vec3 ambient;
 	glm::vec3 diffuse;
 	glm::vec3 specular;
-	int type;
-	int reflection;
-	float strength;
+	int shadingType;
+	int isPoint;
+	int shineOn;
 	float Ka;
 	float Kd;
 	float Ks;
-	float shineOn;
-	glm::vec3 location;
 	Light();
-
-	glm::vec3 CalcIllumination(glm::vec3 p, glm::vec3 normal, glm::vec3 eye);
 };
