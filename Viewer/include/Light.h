@@ -8,7 +8,6 @@ public:
 	glm::vec3 ambient;
 	glm::vec3 diffuse;
 	glm::vec3 specular;
-	int shadingType;
 	int isPoint;
 	int shineOn;
 	float Ka;
