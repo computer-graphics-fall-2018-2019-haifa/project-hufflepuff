@@ -247,9 +247,9 @@ std::vector<glm::vec3> Utils::FaceToNormals(const Face & face, const std::vector
 glm::vec4 Utils::GenerateRandomColor()
 {
 	glm::vec4 color(0);
-	color.x = (static_cast<float>(rand()) / (RAND_MAX)) * 0.5 + 0.5;
-	color.y = (static_cast<float>(rand()) / (RAND_MAX)) * 0.5 + 0.5;
-	color.z = (static_cast<float>(rand()) / (RAND_MAX)) * 0.5 + 0.5;
+	color.x = (static_cast<float>(rand()) / (RAND_MAX));
+	color.y = (static_cast<float>(rand()) / (RAND_MAX));
+	color.z = (static_cast<float>(rand()) / (RAND_MAX));
 	color.w = 1.0f;
 	return color;
 }
