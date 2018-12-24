@@ -113,12 +113,9 @@ glm::vec3 Utils::CalcFaceNormal(std::vector<glm::vec3> vertices) {
 glm::mat4 Utils::GetTransformationMatrix(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate) {
 	glm::mat4 scaleMat = GetScaleMatrix(scale);
 	glm::mat4 rotateMat = GetRotationMatrix(rotate);
-	glm::mat4 translateMat = GetTranslationMatrix(translate);
+	glm::mat4 translateMat = glm::transpose(GetTranslationMatrix(translate));
 
-	return
-		glm::transpose(translateMat)
-		* rotateMat
-		* scaleMat;
+	return translateMat * rotateMat * scaleMat;
 }
 
 
@@ -181,27 +178,25 @@ glm::mat4 Utils::TransMatricesScene(const Scene & scene) {
 
 	glm::mat4
 		cvtMat = camera.GetViewTransformation(),
-		cptMat = camera.GetProjTransformation();
+		cptMat = camera.GetProjTransformation(),
+		swtMat = scene.GetWorldTransformation();
 
-	return cptMat * cvtMat;
+	return cptMat * cvtMat * swtMat;
 }
 
 glm::mat4 Utils::TransMatricesModel(const Scene & scene, int modelIdx) {
-	glm::mat4 wtMat = scene.GetModel(modelIdx).GetWorldTransformation(),
-		swtMat = scene.GetWorldTransformation();
-	return TransMatricesScene(scene) * swtMat * wtMat;
+	glm::mat4 wtMat = scene.GetModel(modelIdx).GetWorldTransformation();
+	return TransMatricesScene(scene) * wtMat;
 }
 
 glm::mat4 Utils::TransMatricesLight(const Scene & scene, int lightIdx) {
-	glm::mat4 wtMat = scene.GetLight(lightIdx).GetWorldTransformation(),
-		swtMat = scene.GetWorldTransformation();
-	return TransMatricesScene(scene) * swtMat * wtMat;
+	glm::mat4 wtMat = scene.GetLight(lightIdx).GetWorldTransformation();
+	return TransMatricesScene(scene) * wtMat;
 }
 
 glm::mat4 Utils::TransMatricesCamera(const Scene & scene, int cameraIdx) {
-	glm::mat4 wtMat = scene.GetCamera(cameraIdx).GetWorldTransformation(),
-		swtMat = scene.GetWorldTransformation();
-	return TransMatricesScene(scene) * swtMat * wtMat;
+	glm::mat4 wtMat = scene.GetCamera(cameraIdx).GetWorldTransformation();
+	return TransMatricesScene(scene) * wtMat;
 }
 
 glm::vec3 Utils::Mult(glm::mat4 & mat, glm::vec3 & point)

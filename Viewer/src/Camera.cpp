@@ -12,7 +12,7 @@ Camera::Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up) :
 	eye(eye), at(at), up(up), isOrth(1), fovy(45), height(2.5f), aspectRatio(1), n(10), f(1000),
 	t(1.25f), b(-1.25f), l(-1.25f), r(1.25f), isAspect(true)
 {
-	SetCameraLookAt(glm::vec3(eye), glm::vec3(at), glm::vec3(up));
+	SetCameraLookAt(this->eye, this->at, this->up);
 	this->rotation = glm::vec3(0);
 	/*SetPerspectiveProjection(30, 1, 100, 1000);
 	SetOrthographicProjection(1, 1, 10, 150);*/
@@ -34,13 +34,15 @@ void Camera::SetOrthographicProjection()
 void Camera::SetCameraLookAt(glm::vec3& eye, glm::vec3& at, glm::vec3& up)
 {
 	this->SetWorldTransformation();
-	glm::mat4 translationMatrix = Utils::GetTranslationMatrix(translation);
-	glm::mat4 rotationMatrix = Utils::GetRotationMatrix(rotation);
+	glm::mat4 translationMat = Utils::GetTranslationMatrix(translation);
+	glm::mat4 rotationMat = Utils::GetRotationMatrix(rotation);
 	glm::vec4 eye4 = Utils::Vec4FromVec3(eye);
 	glm::vec4 at4 = Utils::Vec4FromVec3(at);
 	glm::vec4 up4 = Utils::Vec4FromVec3(up);
-	at4 = translationMatrix * rotationMatrix * at4;
-	up4 = rotationMatrix * up4;
+	eye4 = rotationMat * eye4;
+	at4 = translationMat /** rotationMatrix*/ * at4;
+	//up4 = rotationMatrix * up4;
+	location = Utils::Vec3FromVec4(eye4);
 
 	glm::vec4 zAxis4 = glm::normalize(eye4 - at4);
 	glm::vec3 zAxis3 = Utils::Vec3FromVec4(zAxis4);
@@ -72,7 +74,6 @@ void Camera::SetWorldTransformation(const glm::mat4x4& worldTransform)
 
 void Camera::SetWorldTransformation() {
 	MeshModel::SetWorldTransformation();
-	//MeshModel::SetWorldTransformation(glm::inverse(this->GetWorldTransformation()));
 }
 
 void Camera::SetOrthographicProjection(

@@ -138,12 +138,24 @@ glm::vec3 Renderer::centerPoint(glm::vec4 point)
 	return Utils::Vec3FromVec4(point) + centerAxes;
 }
 
+float CalcZOfPointOnLine(glm::vec3 start, glm::vec3 end, float x) {
+	glm::vec3 normal = glm::normalize(start - end);
+	float t;
+	if (normal.x) {
+		t = (x - start.x) / normal.x;
+	}
+	else {
+		t = 0;
+	}
+	glm::vec3 p = start + normal * t;
+	return p.z;
+}
+
 void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& color = glm::vec3(0,0,0)) {
 	// Bresenham's line algorithm
 	float
 		x1 = point1.x,
 		y1 = point1.y,
-		z1 = point2.z,
 		x2 = point2.x,
 		y2 = point2.y;
 
@@ -167,17 +179,18 @@ void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& colo
 	float error = dx / 2.0f;
 	const int ystep = (y1 < y2) ? 1 : -1;
 	int y = (int)y1;
-	double z = point1.z;
 
 	const int maxX = (int)x2;
 
-	for (int x = (int)x1; x<maxX; x++)
+	for (int x = (int)x1; x < maxX; x++)
 	{
 		if (steep) {
-			putPixel(y, x, z1, color);
+			float z = CalcZOfPointOnLine(point1, point2, y);
+			putPixel(y, x, z, color);
 		}
 		else {
-			putPixel(x, y, z1, color);
+			float z = CalcZOfPointOnLine(point1, point2, x);
+			putPixel(x, y, z, color);
 		}
 
 		error -= dy;
@@ -233,10 +246,10 @@ void Renderer::DrawBoundingBox(glm::mat4 matrix, glm::vec3 min, glm::vec3 max)
 
 glm::vec3 Renderer::CalcIllumination(Light& light, glm::vec3 p, glm::vec3 normal, glm::vec3 eye)
 {
-	glm::vec3 l = light.location,
+	glm::vec3 l = centerPoint(light.location),
 		lightVector = light.isPoint ? glm::normalize(p - l) : glm::normalize(-l),
 		mirror = 2.0f * (glm::dot(normal, lightVector)) - lightVector,
-		lookDirection = -glm::normalize(p - eye);
+		lookDirection = glm::normalize(p - eye);
 	float brightness = glm::max(glm::dot(normal, lightVector), 0.0f);
 	float cosPhi = glm::dot(lookDirection, mirror);
 	glm::vec3 illumination;
@@ -274,7 +287,8 @@ void Renderer::DrawTriangle(std::vector<glm::vec3>& vertices, std::vector<glm::v
 		maxX = glm::max(p1.x, glm::max(p2.x, p3.x)),
 		maxY = glm::max(p1.y, glm::max(p2.y, p3.y));
 	std::vector<Light*> lights = scene.GetLights();
-	glm::vec3 eye = scene.GetActiveCamera().eye;
+	glm::vec3 eye = scene.GetActiveCamera().location;
+	//eye = Utils::Mult(Utils::GetRotationMatrix(scene.GetActiveCamera().rotation), eye);
 	glm::vec3 faceNormal = Utils::CalcFaceNormal(vertices);
 	glm::vec3 c1 = model->color,
 		c2 = model->color2;
@@ -357,27 +371,27 @@ void Renderer::DrawAxes(const Scene& scene) {
 		y_pos = Utils::Mult(matrix, vec3(0, size, 0)),
 		z_neg = Utils::Mult(matrix, vec3(0, 0, -size)),
 		z_pos = Utils::Mult(matrix, vec3(0, 0, size));
-
+	
 	// x axis
 	DrawLine(centerPoint(x_pos), centerPoint(x_neg), vec3(1, 0, 0));
 
 	// y axis
-	DrawLine(centerPoint(y_pos), centerPoint(y_neg), vec3(0, 1, 0));
+	//DrawLine(centerPoint(y_pos), centerPoint(y_neg), vec3(0, 1, 0));
 
 	// z axis
 	DrawLine(centerPoint(z_pos), centerPoint(z_neg), vec3(0, 0, 1));
-
-	//// optional grid
-	//for (int i = -size; i <= size; i += size / 8) {
-	//	glm::vec3
-	//		x_s = Utils::Mult(matrix, vec3(i, 0, size)),
-	//		x_e = Utils::Mult(matrix, vec3(i, 0, -size)),
-	//		z_s = Utils::Mult(matrix, vec3(size, 0, i)),
-	//		z_e = Utils::Mult(matrix, vec3(-size, 0, i));
-	//	glm::vec3 color = vec3(0.5, 0.5, 0.5);
-	//	DrawLine(centerPoint(x_s), centerPoint(x_e), color);
-	//	DrawLine(centerPoint(z_s), centerPoint(z_e), color);
-	//}
+	
+	// optional grid
+	for (int i = -size; i <= size; i += size / 8) {
+		glm::vec3
+			x_s = Utils::Mult(matrix, vec3(i, 0, size)),
+			x_e = Utils::Mult(matrix, vec3(i, 0, -size)),
+			z_s = Utils::Mult(matrix, vec3(size, 0, i)),
+			z_e = Utils::Mult(matrix, vec3(-size, 0, i));
+		glm::vec3 color = vec3(0.5, 0.5, 0.5);
+		DrawLine(centerPoint(x_s), centerPoint(x_e), color);
+		DrawLine(centerPoint(z_s), centerPoint(z_e), color);
+	}
 }
 
 void Renderer::DrawModel(const Scene& scene, MeshModel* _model, glm::mat4 matrix, bool lightModel) {
@@ -462,6 +476,7 @@ void Renderer::Render(const Scene& scene)
 
 	// draw lights
 	for (int i = 0; i < scene.GetLightCount(); i++) {
+		if (!scene.GetLight(i).isPoint) continue;
 		MeshModel* model = &(*lights.at(i));
 		(*model).SetWorldTransformation();
 		glm::mat4 matrix = Utils::TransMatricesLight(scene, i);

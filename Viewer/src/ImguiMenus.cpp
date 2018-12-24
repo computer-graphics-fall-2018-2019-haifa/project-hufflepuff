@@ -196,25 +196,17 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 				cameraNames[i] = const_cast<char*>(cameras[i]->GetModelName().c_str());
 
 			ImGui::Combo("Select camera", &scene.activeCameraIndex, cameraNames, camerasAmount);
-
-			//ImGui::Separator();
-			/*ImGui::Text("Rotate");
+			
+			ImGui::Text("Active Camera Preferences:");
+			ImGui::Separator();
+			ImGui::Text("Rotate");
 			ImGui::SliderFloat("Rotate.c X", &(activeCamera->rotation.x), 0.0f, 360.0f);
 			ImGui::SliderFloat("Rotate.c Y", &(activeCamera->rotation.y), 0.0f, 360.0f);
-			ImGui::SliderFloat("Rotate.c Z", &(activeCamera->rotation.z), 0.0f, 360.0f);*/
-			ImGui::Separator();
-			ImGui::Text("Active Camera Preferences:");
+			ImGui::SliderFloat("Rotate.c Z", &(activeCamera->rotation.z), 0.0f, 360.0f);
+			/*ImGui::Separator();
 			ImGui::SliderFloat("Eye X", &(activeCamera->eye.x), -1000.0f, 1000.0f);
 			ImGui::SliderFloat("Eye Y", &(activeCamera->eye.y), -1000.0f, 1000.0f);
-			ImGui::SliderFloat("Eye Z", &(activeCamera->eye.z), -1000.0f, 1000.0f);
-			ImGui::Separator();
-			ImGui::SliderFloat("At X", &(activeCamera->at.x), -100.0f, 100.0f);
-			ImGui::SliderFloat("At Y", &(activeCamera->at.y), -100.0f, 100.0f);
-			ImGui::SliderFloat("At Z", &(activeCamera->at.z), -100.0f, 100.0f);
-			ImGui::Separator();
-			ImGui::SliderFloat("Up X", &(activeCamera->up.x), -100.0f, 100.0f);
-			ImGui::SliderFloat("Up Y", &(activeCamera->up.y), -100.0f, 100.0f);
-			ImGui::SliderFloat("Up Z", &(activeCamera->up.z), -100.0f, 100.0f);
+			ImGui::SliderFloat("Eye Z", &(activeCamera->eye.z), -1000.0f, 1000.0f);*/
 
 			ImGui::Separator();
 			ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 1.0f, 3.0f);
@@ -245,7 +237,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
 
 			activeCamera->translation = activeCamera->eye;
-			activeCamera->location = Utils::Mult(Utils::TransMatricesCamera(scene, activeCameraIndex), activeCamera->translation);
+			//activeCamera->location = Utils::Mult(Utils::TransMatricesCamera(scene, activeCameraIndex), activeCamera->translation);
 			//activeCamera->SetWorldTransformation();
 			//scene.SetWorldTransformation();
 
@@ -310,7 +302,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 		activeCamera->SetCameraLookAt();
 		activeLight->SetWorldTransformation();
 		glm::vec3 point = activeLight->GetVertices()[0];
-		activeLight->location = Utils::Mult(Utils::TransMatricesLight(scene, activeLightIndex), point);
+		activeLight->location = Utils::Mult(Utils::GetRotationMatrix(activeLight->rotation) * Utils::TransMatricesLight(scene, activeLightIndex), point);
 		ImGui::End();
 	}
 

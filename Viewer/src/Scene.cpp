@@ -11,7 +11,7 @@ Scene::Scene() :
 	scale({ 1, 1, 1 }),
 	rotation({ 0, 0, 0 }),
 	translation({ 0, 0, 0 }),
-	shadingType(1),
+	shadingType(2),
 	fogActivated(false)
 {
 
