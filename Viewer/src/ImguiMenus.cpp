@@ -284,10 +284,18 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			ImGui::RadioButton("Parallel", &(activeLight->isPoint), 0);
 
 			ImGui::Separator();
-			ImGui::Text("Translate Light");
-			ImGui::SliderFloat("Trans.l X", &(activeLight->translation.x), -400.0f, 400.0f);
-			ImGui::SliderFloat("Trans.l Y", &(activeLight->translation.y), -400.0f, 400.0f);
-			ImGui::SliderFloat("Trans.l Z", &(activeLight->translation.z), -400.0f, 400.0f);
+			if (activeLight->isPoint) {
+				ImGui::Text("Translate Light");
+				ImGui::SliderFloat("Trans.l X", &(activeLight->translation.x), -400.0f, 400.0f);
+				ImGui::SliderFloat("Trans.l Y", &(activeLight->translation.y), -400.0f, 400.0f);
+				ImGui::SliderFloat("Trans.l Z", &(activeLight->translation.z), -400.0f, 400.0f);
+			}
+			else {
+				ImGui::Text("Rotate Light");
+				ImGui::SliderFloat("Rotate.l X", &(activeLight->rotation.x), 0.0f, 360.0f);
+				ImGui::SliderFloat("Rotate.l Y", &(activeLight->rotation.y), 0.0f, 360.0f);
+				ImGui::SliderFloat("Rotate.l Z", &(activeLight->rotation.z), 0.0f, 360.0f);
+			}
 
 			ImGui::Separator();
 			ImGui::Text("Reflection:");
@@ -300,8 +308,9 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			delete[] lightNames;
 		}
 		activeCamera->SetCameraLookAt();
-		activeLight->location = Utils::Mult(Utils::TransMatricesLight(scene, activeLightIndex), activeLight->translation);
 		activeLight->SetWorldTransformation();
+		glm::vec3 point = activeLight->GetVertices()[0];
+		activeLight->location = Utils::Mult(Utils::TransMatricesLight(scene, activeLightIndex), point);
 		ImGui::End();
 	}
 
