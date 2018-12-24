@@ -255,9 +255,11 @@ glm::vec3 Renderer::CalcIllumination(Light& light, glm::vec3 p, glm::vec3 normal
 
 glm::vec3 Renderer::applyFog(glm::vec3& color, float currentZ) {
 	glm::vec3 fogColor(0.8353f, 0.7804f, 0.9098f);
-	float zStart = 200, zEnd = 400;
+	float zStart = zNear, zEnd = zFar;
 	float density = 0.2;
 	float fogFactor = exp(-abs(currentZ) * density);
+	//fogFactor = (zEnd - currentZ) / (zEnd - zStart);
+
 	fogFactor = glm::clamp(fogFactor, 0.0f, 1.0f);
 	
 	return glm::mix(fogColor, color, fogFactor);
@@ -429,6 +431,8 @@ void Renderer::Render(const Scene& scene)
 	x_add = (int)(w / 2);
 	y_add = (int)(h / 2);
 	fogActivated = scene.fogActivated;
+	zNear = scene.GetActiveCamera().n;
+	zFar = scene.GetActiveCamera().f;
 
 	centerAxes = vec3(x_add, y_add, 0);
 

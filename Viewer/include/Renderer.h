@@ -23,6 +23,8 @@ private:
 	int aliasViewportWidth;
 	int aliasViewportHeight;
 	bool fogActivated;
+	float zNear;
+	float zFar;
 
 	void putPixel(int x, int y, double z, const glm::vec3& color, bool test = true);
 	void createBuffers(int viewportWidth, int viewportHeight, glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f));
