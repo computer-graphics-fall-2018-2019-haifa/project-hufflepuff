@@ -24,7 +24,8 @@ int y_add;
 
 Renderer::Renderer(int viewportWidth, int viewportHeight, int viewportX, int viewportY) :
 	colorBuffer(nullptr),
-	zBuffer(nullptr)
+	zBuffer(nullptr),
+	fogColor(0.8353f, 0.7804f, 0.9098f)
 {
 	initOpenGLRendering();
 	alias = false;
@@ -179,17 +180,17 @@ void Renderer::DrawLine(const vec3& point1, const vec3& point2, const vec3& colo
 	float error = dx / 2.0f;
 	const int ystep = (y1 < y2) ? 1 : -1;
 	int y = (int)y1;
-
 	const int maxX = (int)x2;
+	float z;
 
 	for (int x = (int)x1; x < maxX; x++)
 	{
 		if (steep) {
-			float z = CalcZOfPointOnLine(point1, point2, y);
+			z = CalcZOfPointOnLine(point1, point2, y);
 			putPixel(y, x, z, color);
 		}
 		else {
-			float z = CalcZOfPointOnLine(point1, point2, x);
+			z = CalcZOfPointOnLine(point1, point2, x);
 			putPixel(x, y, z, color);
 		}
 
@@ -267,14 +268,8 @@ glm::vec3 Renderer::CalcIllumination(Light& light, glm::vec3 p, glm::vec3 normal
 }
 
 glm::vec3 Renderer::applyFog(glm::vec3& color, float currentZ) {
-	glm::vec3 fogColor(0.8353f, 0.7804f, 0.9098f);
-	float zStart = zNear, zEnd = zFar;
-	float density = 0.2;
-	float fogFactor = exp(-abs(currentZ) * density);
-	//fogFactor = (zEnd - currentZ) / (zEnd - zStart);
-
+	float fogFactor = (zFar - abs(currentZ)) / (zFar - zNear);
 	fogFactor = glm::clamp(fogFactor, 0.0f, 1.0f);
-	
 	return glm::mix(fogColor, color, fogFactor);
 }
 
