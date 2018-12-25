@@ -439,7 +439,6 @@ void Renderer::Render(const Scene& scene)
 	InitZBuffer();
 	x_add = (int)(w / 2);
 	y_add = (int)(h / 2);
-	fogActivated = scene.fogActivated;
 	zNear = scene.GetActiveCamera().n;
 	zFar = scene.GetActiveCamera().f;
 

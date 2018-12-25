@@ -24,8 +24,6 @@ private:
 	int aliasViewportHeight;
 	float zNear;
 	float zFar;
-	bool fogActivated;
-	glm::vec3 fogColor;
 
 	void putPixel(int x, int y, double z, const glm::vec3& color, bool test = true);
 	void createBuffers(int viewportWidth, int viewportHeight, glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f));
@@ -42,6 +40,8 @@ private:
 
 public:
 	bool alias;
+	bool fogActivated;
+	glm::vec3 fogColor;
 
 	Renderer(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
 	~Renderer();
