@@ -178,25 +178,27 @@ glm::mat4 Utils::TransMatricesScene(const Scene & scene) {
 
 	glm::mat4
 		cvtMat = camera.GetViewTransformation(),
-		cptMat = camera.GetProjTransformation(),
-		swtMat = scene.GetWorldTransformation();
+		cptMat = camera.GetProjTransformation();
 
-	return cptMat * cvtMat * swtMat;
+	return cptMat * cvtMat;
 }
 
 glm::mat4 Utils::TransMatricesModel(const Scene & scene, int modelIdx) {
 	glm::mat4 wtMat = scene.GetModel(modelIdx).GetWorldTransformation();
-	return TransMatricesScene(scene) * wtMat;
+	glm::mat4 swtMat = scene.GetWorldTransformation();
+	return TransMatricesScene(scene) * swtMat * wtMat;
 }
 
 glm::mat4 Utils::TransMatricesLight(const Scene & scene, int lightIdx) {
 	glm::mat4 wtMat = scene.GetLight(lightIdx).GetWorldTransformation();
-	return TransMatricesScene(scene) * wtMat;
+	glm::mat4 swtMat = scene.GetWorldTransformation();
+	return TransMatricesScene(scene) * swtMat * wtMat;
 }
 
 glm::mat4 Utils::TransMatricesCamera(const Scene & scene, int cameraIdx) {
 	glm::mat4 wtMat = scene.GetCamera(cameraIdx).GetWorldTransformation();
-	return TransMatricesScene(scene) * wtMat;
+	glm::mat4 swtMat = scene.GetWorldTransformation();
+	return TransMatricesScene(scene) * swtMat * wtMat;
 }
 
 glm::vec3 Utils::Mult(glm::mat4 & mat, glm::vec3 & point)
