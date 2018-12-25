@@ -66,13 +66,6 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 
 		ImGui::Begin("Mesh Model Viewer!");
 
-		ImGui::ColorEdit3("BG color", (float*)&clearColor);
-		if (ImGui::Button("Toggle anti-aliasing")) {
-			renderer.alias = !renderer.alias;
-			renderer.SetViewport();
-			activeCamera->zoom *= renderer.alias ? 2 : 0.5;
-		}
-
 		if (ImGui::CollapsingHeader("Models") && modelsAmount > 0) {
 			std::shared_ptr<MeshModel> activeModel = models.at(activeModelIndex);
 			char** modelNames = new char*[modelsAmount];
@@ -183,6 +176,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 
 		ImGui::Separator();
 		if (ImGui::CollapsingHeader("Cameras") && camerasAmount > 0) {
+			static int controlCam = 0;
+
 			if (ImGui::Button("Add Camera")) {
 				glm::vec3 eye = activeCamera->eye,
 					at = activeCamera->at,
@@ -199,14 +194,19 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			
 			ImGui::Text("Active Camera Preferences:");
 			ImGui::Separator();
-			ImGui::Text("Rotate");
-			ImGui::SliderFloat("Rotate.c X", &(activeCamera->rotation.x), 0.0f, 360.0f);
-			ImGui::SliderFloat("Rotate.c Y", &(activeCamera->rotation.y), 0.0f, 360.0f);
-			ImGui::SliderFloat("Rotate.c Z", &(activeCamera->rotation.z), 0.0f, 360.0f);
-			/*ImGui::Separator();
-			ImGui::SliderFloat("Eye X", &(activeCamera->eye.x), -1000.0f, 1000.0f);
-			ImGui::SliderFloat("Eye Y", &(activeCamera->eye.y), -1000.0f, 1000.0f);
-			ImGui::SliderFloat("Eye Z", &(activeCamera->eye.z), -1000.0f, 1000.0f);*/
+			ImGui::RadioButton("Rotate", &controlCam, 0);
+			ImGui::SameLine();
+			ImGui::RadioButton("Translate", &controlCam, 1);
+			if (controlCam == 0) {
+				ImGui::SliderFloat("Rotate.c X", &(activeCamera->rotation.x), 0.0f, 360.0f);
+				ImGui::SliderFloat("Rotate.c Y", &(activeCamera->rotation.y), 0.0f, 360.0f);
+				ImGui::SliderFloat("Rotate.c Z", &(activeCamera->rotation.z), 0.0f, 360.0f);
+			}
+			else {
+				ImGui::SliderFloat("Trans.c X", &(activeCamera->eye.x), -1000.0f, 1000.0f);
+				ImGui::SliderFloat("Trans.c Y", &(activeCamera->eye.y), -1000.0f, 1000.0f);
+				ImGui::SliderFloat("Trans.c Z", &(activeCamera->eye.z), -1000.0f, 1000.0f);
+			}
 
 			ImGui::Separator();
 			ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 1.0f, 3.0f);
@@ -258,17 +258,9 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 
 			ImGui::Combo("Select light", &scene.activeLightIndex, lightNames, lightsAmount);
 
+			ImGui::Text("Active Light Preferences:");
 			ImGui::Separator();
 			ImGui::ColorEdit3("Light color", (float*)&(activeLight->color));
-
-			ImGui::Separator();
-			ImGui::Text("Shading method:");
-			ImGui::RadioButton("Flat", &(scene.shadingType), 0);
-			ImGui::RadioButton("Gouraud", &(scene.shadingType), 1);
-			ImGui::RadioButton("Phong", &(scene.shadingType), 2);
-
-			ImGui::Separator();
-			ImGui::Checkbox("Fog", &(scene.fogActivated));
 
 			ImGui::Separator();
 			ImGui::Text("Light type:");
@@ -276,18 +268,22 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			ImGui::RadioButton("Parallel", &(activeLight->isPoint), 0);
 
 			ImGui::Separator();
-			if (activeLight->isPoint) {
-				ImGui::Text("Translate Light");
-				ImGui::SliderFloat("Trans.l X", &(activeLight->translation.x), -400.0f, 400.0f);
-				ImGui::SliderFloat("Trans.l Y", &(activeLight->translation.y), -400.0f, 400.0f);
-				ImGui::SliderFloat("Trans.l Z", &(activeLight->translation.z), -400.0f, 400.0f);
-			}
-			else {
+			//if (activeLight->isPoint) {
+			ImGui::Text("Translate Light");
+			ImGui::SliderFloat("Trans.l X", &(activeLight->translation.x), -400.0f, 400.0f);
+			ImGui::SliderFloat("Trans.l Y", &(activeLight->translation.y), -400.0f, 400.0f);
+			ImGui::SliderFloat("Trans.l Z", &(activeLight->translation.z), -400.0f, 400.0f);
+			glm::vec3 point = activeLight->GetVertices()[0];
+			activeLight->location = Utils::Mult(Utils::TransMatricesLight(scene, activeLightIndex), point);
+			//}
+			/*else {
 				ImGui::Text("Rotate Light");
 				ImGui::SliderFloat("Rotate.l X", &(activeLight->rotation.x), 0.0f, 360.0f);
 				ImGui::SliderFloat("Rotate.l Y", &(activeLight->rotation.y), 0.0f, 360.0f);
 				ImGui::SliderFloat("Rotate.l Z", &(activeLight->rotation.z), 0.0f, 360.0f);
-			}
+				glm::vec3 point = activeLight->GetVertices()[0];
+				activeLight->location = Utils::Mult(Utils::GetRotationMatrix(activeLight->rotation) * Utils::TransMatricesLight(scene, activeLightIndex), point);
+			}*/
 
 			ImGui::Separator();
 			ImGui::Text("Reflection:");
@@ -299,10 +295,36 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 
 			delete[] lightNames;
 		}
+		else {
+			glm::vec3 point = activeLight->GetVertices()[0];
+			activeLight->location = Utils::Mult(Utils::TransMatricesLight(scene, activeLightIndex), point);
+		}
+		
+		ImGui::Separator();
+		if (ImGui::CollapsingHeader("Scene")) {
+			ImGui::ColorEdit3("BG color", (float*)&clearColor);
+			ImGui::Separator();
+			if (ImGui::Button("Toggle anti-aliasing")) {
+				renderer.alias = !renderer.alias;
+				renderer.SetViewport();
+				activeCamera->zoom *= renderer.alias ? 2 : 0.5;
+			}
+
+			ImGui::Separator();
+			ImGui::Text("Shading method:");
+			ImGui::RadioButton("Flat", &(scene.shadingType), 0);
+			ImGui::RadioButton("Gouraud", &(scene.shadingType), 1);
+			ImGui::RadioButton("Phong", &(scene.shadingType), 2);
+
+			ImGui::Separator();
+			ImGui::Checkbox("Activate fog", &(renderer.fogActivated));
+			if (renderer.fogActivated)
+				ImGui::ColorEdit3("Fog color", (float*)&(renderer.fogColor));
+		}
+
+		// update stuff.
 		activeCamera->SetCameraLookAt();
 		activeLight->SetWorldTransformation();
-		glm::vec3 point = activeLight->GetVertices()[0];
-		activeLight->location = Utils::Mult(Utils::GetRotationMatrix(activeLight->rotation) * Utils::TransMatricesLight(scene, activeLightIndex), point);
 		ImGui::End();
 	}
 
