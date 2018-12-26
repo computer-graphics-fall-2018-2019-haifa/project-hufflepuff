@@ -25,7 +25,8 @@ int y_add;
 Renderer::Renderer(int viewportWidth, int viewportHeight, int viewportX, int viewportY) :
 	colorBuffer(nullptr),
 	zBuffer(nullptr),
-	fogColor(0.8353f, 0.7804f, 0.9098f)
+	fogActivated(false),
+	fogColor(0.343f, 0.105f, 0.667f)
 {
 	initOpenGLRendering();
 	alias = false;

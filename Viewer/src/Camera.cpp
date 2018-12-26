@@ -9,7 +9,7 @@
 
 Camera::Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up) :
 	zoom(1.0), MeshModel(Utils::LoadMeshModel("..\\Data\\camera.obj")), projectionTransformation(glm::mat4(1)),
-	eye(eye), at(at), up(up), isOrth(1), fovy(45), height(2.5f), aspectRatio(1), n(10), f(1000),
+	eye(eye), at(at), up(up), isOrth(1), fovy(45), height(2.5f), aspectRatio(1), n(75), f(100),
 	t(1.25f), b(-1.25f), l(-1.25f), r(1.25f), isAspect(true)
 {
 	SetCameraLookAt(this->eye, this->at, this->up);
