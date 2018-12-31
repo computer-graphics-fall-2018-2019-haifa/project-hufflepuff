@@ -252,7 +252,7 @@ glm::vec3 Renderer::CalcIllumination(Light& light, glm::vec3 p, glm::vec3 normal
 		lightVector = light.isPoint ? glm::normalize(p - l) : glm::normalize(-l),
 		mirror = 2.0f * (glm::dot(normal, lightVector)) - lightVector,
 		lookDirection = glm::normalize(p - eye);
-	float brightness = glm::max(glm::dot(normal, lightVector), 0.0f);
+	float brightness = glm::max(glm::dot(glm::vec3(normal.x, normal.y, -normal.z), lightVector), 0.0f);
 	float cosPhi = glm::dot(lookDirection, mirror);
 	glm::vec3 illumination;
 
@@ -339,8 +339,8 @@ void Renderer::DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m) {
 		p2 = vertices[1],
 		p3 = vertices[2],
 		mid = (p1 + p2 + p3) / vec3(3),
-		normal = glm::cross((p2 - p1), (p3 - p1)),
-		startPoint = mid,
+		normal = Utils::CalcFaceNormal(vertices),
+		startPoint = mid - (normal * vec3(5)),
 		endPoint = mid + (normal * vec3(5));
 	int w = GetActiveViewportWidth();
 	int h = GetActiveViewportHeight();

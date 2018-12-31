@@ -107,7 +107,7 @@ glm::vec3 Utils::CalcFaceNormal(std::vector<glm::vec3> vertices) {
 	glm::vec3 p1 = vertices[0],
 		p2 = vertices[1],
 		p3 = vertices[2];
-	return glm::cross((p2 - p1), (p3 - p1));
+	return glm::normalize(glm::cross((p2 - p1), (p3 - p1)));
 }
 
 glm::mat4 Utils::GetTransformationMatrix(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate) {

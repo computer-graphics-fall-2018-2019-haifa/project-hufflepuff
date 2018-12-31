@@ -274,7 +274,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			ImGui::SliderFloat("Trans.l Y", &(activeLight->translation.y), -400.0f, 400.0f);
 			ImGui::SliderFloat("Trans.l Z", &(activeLight->translation.z), -400.0f, 400.0f);
 			glm::vec3 point = activeLight->GetVertices()[0];
-			activeLight->location = Utils::Mult(Utils::TransMatricesLight(scene, activeLightIndex), point);
+			activeLight->location = Utils::Mult(activeLight->GetWorldTransformation() * scene.GetWorldTransformation(), point);
 			//}
 			/*else {
 				ImGui::Text("Rotate Light");
