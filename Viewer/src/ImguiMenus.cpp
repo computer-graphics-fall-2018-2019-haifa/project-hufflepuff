@@ -82,15 +82,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 				activeCamera->SetCameraLookAt();
 			}
 			
-			ImGui::Checkbox("Uniform Material", &(activeModel->uniformMaterial));
 			ImGui::Checkbox("Vertex Normals", &(activeModel->showVertexNormals));
 			ImGui::Checkbox("Face Normals", &(activeModel->showFacesNormals));
 			ImGui::Checkbox("Bouding Box", &(activeModel->showBoundingBox));
 
 			ImGui::ColorEdit3("Color", (float*)&(activeModel->color));
-			if (!activeModel->uniformMaterial) {
-				ImGui::ColorEdit3("2nd Color", (float*)&(activeModel->color2));
-			}
 
 			ImGui::Separator();
 			ImGui::Text("Control over:");
@@ -302,13 +298,15 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 		
 		ImGui::Separator();
 		if (ImGui::CollapsingHeader("Scene")) {
-			ImGui::ColorEdit3("BG color", (float*)&clearColor);
+			if (ImGui::ColorEdit3("BG color", (float*)&clearColor)) {
+				glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+			}
 			ImGui::Separator();
-			if (ImGui::Button("Toggle anti-aliasing")) {
+			/*if (ImGui::Button("Toggle anti-aliasing")) {
 				renderer.alias = !renderer.alias;
 				renderer.SetViewport();
 				activeCamera->zoom *= renderer.alias ? 2 : 0.5;
-			}
+			}*/
 
 			ImGui::Separator();
 			ImGui::Text("Shading method:");

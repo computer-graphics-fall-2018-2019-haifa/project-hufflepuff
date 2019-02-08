@@ -1,6 +1,9 @@
 #pragma once
 #include "Scene.h"
+#include "ShaderProgram.h"
+#include "Texture2D.h"
 #include <vector>
+#include <memory>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
@@ -25,16 +28,20 @@ private:
 	float zNear;
 	float zFar;
 
-	void putPixel(int x, int y, double z, const glm::vec3& color, bool test = true);
+	ShaderProgram lightShader;
+	ShaderProgram colorShader;
+	Texture2D texture1;
+
+	/*void putPixel(int x, int y, double z, const glm::vec3& color, bool test = true);
 	void createBuffers(int viewportWidth, int viewportHeight, glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f));
 	int GetActiveViewportWidth();
-	int GetActiveViewportHeight();
+	int GetActiveViewportHeight();*/
 
 	GLuint glScreenTex;
 	GLuint glScreenVtc;
 
-	void createOpenGLBuffer();
-	void initOpenGLRendering();
+	/*void createOpenGLBuffer();
+	void initOpenGLRendering();*/
 
 	glm::vec3 centerAxes;
 
@@ -46,14 +53,17 @@ public:
 	Renderer(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
 	~Renderer();
 
-	void Render(const Scene& scene);
-	void SwapBuffers();
-	void ClearColorBuffer(const glm::vec3& color);
-	void SetViewport(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
-	void SetViewport();
+	void DrawModel(const Scene & scene, MeshModel* model, glm::mat4 transMat);
 
-	// Add more methods/functionality as needed...
-	glm::vec3 centerPoint(glm::vec3 point);
+	void Render(const Scene& scene);
+	/*void SwapBuffers();
+	void ClearColorBuffer(const glm::vec3& color);*/
+	/*void SetViewport(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
+	void SetViewport();*/
+
+	void LoadShaders();
+	void LoadTextures();
+	/*glm::vec3 centerPoint(glm::vec3 point);
 	glm::vec3 centerPoint(glm::vec4 point);
 	void DrawLine(const vec3& point1, const vec3& point2, const vec3& color);
 	void DrawSquare(vec3 vertices[4], vec3 color);
@@ -64,5 +74,5 @@ public:
 	void DrawFaceNormal(std::vector<glm::vec3>& vertices, glm::mat4 m);
 	void DrawAxes(const Scene & scene);
 	void DrawModel(const Scene& scene, MeshModel* model, glm::mat4 matrix, bool lightModel = false);
-	void InitZBuffer();
+	void InitZBuffer();*/
 };

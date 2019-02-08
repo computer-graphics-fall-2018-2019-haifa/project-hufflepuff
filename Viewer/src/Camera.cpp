@@ -34,37 +34,38 @@ void Camera::SetOrthographicProjection()
 void Camera::SetCameraLookAt(glm::vec3& eye, glm::vec3& at, glm::vec3& up)
 {
 	this->SetWorldTransformation();
-	glm::mat4 translationMat = Utils::GetTranslationMatrix(translation);
-	glm::mat4 rotationMat = Utils::GetRotationMatrix(rotation);
-	glm::vec4 eye4 = Utils::Vec4FromVec3(eye);
-	glm::vec4 at4 = Utils::Vec4FromVec3(at);
-	glm::vec4 up4 = Utils::Vec4FromVec3(up);
-	eye4 = rotationMat * eye4;
-	at4 = translationMat /** rotationMatrix*/ * at4;
-	//up4 = rotationMatrix * up4;
-	location = Utils::Vec3FromVec4(eye4);
+	//glm::mat4 translationMat = Utils::GetTranslationMatrix(translation);
+	//glm::mat4 rotationMat = Utils::GetRotationMatrix(rotation);
+	//glm::vec4 eye4 = Utils::Vec4FromVec3(eye);
+	//glm::vec4 at4 = Utils::Vec4FromVec3(at);
+	//glm::vec4 up4 = Utils::Vec4FromVec3(up);
+	//eye4 = rotationMat * eye4;
+	//at4 = translationMat /** rotationMatrix*/ * at4;
+	////up4 = rotationMatrix * up4;
+	//location = Utils::Vec3FromVec4(eye4);
 
-	glm::vec4 zAxis4 = glm::normalize(eye4 - at4);
-	glm::vec3 zAxis3 = Utils::Vec3FromVec4(zAxis4);
-	glm::vec3 xAxis3 = glm::normalize(glm::cross(Utils::Vec3FromVec4(up4), zAxis3));
-	glm::vec3 yAxis3 = glm::normalize(glm::cross(zAxis3, xAxis3));
+	//glm::vec4 zAxis4 = glm::normalize(eye4 - at4);
+	//glm::vec3 zAxis3 = Utils::Vec3FromVec4(zAxis4);
+	//glm::vec3 xAxis3 = glm::normalize(glm::cross(Utils::Vec3FromVec4(up4), zAxis3));
+	//glm::vec3 yAxis3 = glm::normalize(glm::cross(zAxis3, xAxis3));
 
-	glm::vec4 xAxis4 = Utils::Vec4FromVec3(xAxis3, 0);
-	glm::vec4 yAxis4 = Utils::Vec4FromVec3(yAxis3, 0);
-	glm::vec4 t4 = glm::vec4(0.0, 0.0, 0.0, 1.0);
-	zAxis4 = glm::vec4(zAxis3, 0);
+	//glm::vec4 xAxis4 = Utils::Vec4FromVec3(xAxis3, 0);
+	//glm::vec4 yAxis4 = Utils::Vec4FromVec3(yAxis3, 0);
+	//glm::vec4 t4 = glm::vec4(0.0, 0.0, 0.0, 1.0);
+	//zAxis4 = glm::vec4(zAxis3, 0);
 
-	glm::mat4 c(
-		xAxis4,
-		yAxis4,
-		zAxis4,
-		t4
-	);
-	c = glm::transpose(c);
-	glm::mat4 identity(1);
-	identity[3] -= eye4 - glm::vec4(0, 0, 0, 1);
+	//glm::mat4 c(
+	//	xAxis4,
+	//	yAxis4,
+	//	zAxis4,
+	//	t4
+	//);
+	//c = glm::transpose(c);
+	//glm::mat4 identity(1);
+	//identity[3] -= eye4 - glm::vec4(0, 0, 0, 1);
 
-	this->viewTransformation = c * identity * Utils::GetScaleMatrix(glm::vec3(zoom));
+	//this->viewTransformation = c * identity * Utils::GetScaleMatrix(glm::vec3(zoom));
+	this->viewTransformation = glm::lookAt(eye, at, up);
 }
 
 void Camera::SetWorldTransformation(const glm::mat4x4& worldTransform)
@@ -89,13 +90,7 @@ void Camera::SetOrthographicProjection(
 		l = -0.5 * width;
 		r = 0.5 * width;
 	}
-
-	this->projectionTransformation = glm::mat4(
-		2 / (r - l), 0, 0, 0,
-		0, 2 / (t - b), 0, 0,
-		0, 0, 2 / (_near - _far), 0,
-		-(r + l) / (r - l), -(t + b) / (t - b), -(_far + _near) / (_far - _near), 1
-	);
+	this->projectionTransformation = glm::ortho(l, r, b, t, _near, _far);
 }
 
 void Camera::SetPerspectiveProjection() {
@@ -109,7 +104,6 @@ void Camera::SetPerspectiveProjection(
 	const float _far)
 {
 	float nearHeight = (_far - _near) * tan(_fovy * PI);
-	//float nearHeight = 2 * _near * tan(0.5 * _fovy * PI);
 	float nearWidth = _aspectRatio * nearHeight;
 	if (isAspect) {
 		t = 0.5 * nearHeight;
@@ -118,13 +112,7 @@ void Camera::SetPerspectiveProjection(
 		r = 0.5 * nearWidth;
 	}
 
-	this->projectionTransformation = glm::inverse(glm::mat4(
-		(2 * _near) / (r - l), 0, (r + l) / (r - l), 0,
-		0, (2 * _near) / (t - b), (t + b) / (t - b), 0,
-		0, 0, -(_far + _near) / (_far - _near), -(2 * _far * _near) / (_far - _near),
-		0, 0, -1, 0
-	));
-	this->projectionTransformation = glm::transpose(this->projectionTransformation);
+	this->projectionTransformation = glm::perspective(_fovy, _aspectRatio, _near, _far);
 }
 
 void Camera::SetZoom(const float zoom)
@@ -132,12 +120,12 @@ void Camera::SetZoom(const float zoom)
 
 }
 
-glm::mat4 Camera::GetViewTransformation()
+glm::mat4 Camera::GetViewTransformation() const
 {
 	return this->viewTransformation;
 }
 
-glm::mat4 Camera::GetProjTransformation()
+glm::mat4 Camera::GetProjTransformation() const
 {
 	return this->projectionTransformation;
 }

@@ -8,9 +8,9 @@ Scene::Scene() :
 	activeCameraIndex(0),
 	activeModelIndex(0),
 	worldTransformation(glm::mat4(1)),
-	scale({ 1, 1, 1 }),
-	rotation({ 0, 0, 0 }),
-	translation({ 0, 0, 0 }),
+	scale(glm::vec3(1)),
+	rotation(glm::vec3(0)),
+	translation(glm::vec3(0)),
 	shadingType(2),
 	fogActivated(false)
 {
@@ -21,6 +21,8 @@ Scene::~Scene()
 {
 	for (Camera* cam : cameras)
 		delete cam;
+	for (Light* light : lights)
+		delete light;
 }
 
 void Scene::AddModel(const std::shared_ptr<MeshModel>& model)
@@ -131,7 +133,7 @@ const MeshModel& Scene::GetActiveModel() const
 	return GetModel(activeModelIndex);
 }
 
-const Camera & Scene::GetActiveCamera() const
+Camera & Scene::GetActiveCamera() const
 {
 	int i = GetActiveCameraIndex();
 	return *cameras.at(i);

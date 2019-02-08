@@ -61,7 +61,7 @@ public:
 	const Light & GetLight(int index) const;
 	const MeshModel& GetActiveModel() const;
 
-	const Camera& GetActiveCamera() const;
+	Camera& GetActiveCamera() const;
 
 	void SetWorldTransformation();
 	glm::mat4 GetWorldTransformation() const;

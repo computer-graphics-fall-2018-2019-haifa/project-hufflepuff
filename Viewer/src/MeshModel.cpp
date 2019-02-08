@@ -6,23 +6,47 @@
 #include <fstream>
 #include <sstream>
 
-MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3>& vertices, const std::vector<glm::vec3>& normals, const std::string& modelName) :
+MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3>& vertices, const std::vector<glm::vec3>& normals, const std::vector<glm::vec2> textureCoords, const std::string& modelName) :
 	vertices(vertices),
 	normals(normals),
 	faces(faces),
+	textureCoords(textureCoords),
 	modelName(modelName),
-	worldTransform(glm::mat4x4(1)),
-	mins(glm::vec4(INFINITY, INFINITY, INFINITY, 1)),
-	maxs(glm::vec4(-INFINITY, -INFINITY, -INFINITY, 1)),
-	scale({ 1,1,1 }),
-	rotation({ 0,0,0 }),
-	translation({ 0,0,0 }),
-	avg({ 0,0,0 }),
+	worldTransform(glm::mat4(1.0f)),
+	mins(glm::vec4(glm::vec3(INFINITY), 1.0f)),
+	maxs(glm::vec4(glm::vec3(-INFINITY), 1.0f)),
+	scale(glm::vec3(1.0f)),
+	rotation(glm::vec3(0.0f)),
+	translation(glm::vec3(0.0f)),
+	location(glm::vec3(0.0f)),
 	showFacesNormals(false),
 	showVertexNormals(false),
 	showBoundingBox(false),
-	uniformMaterial(true)
+	vao(1),
+	vbo(1)
 {
+	// set a list of model vertices
+	modelVertices.reserve(3 * faces.size());
+	for (Face currentFace : faces) {
+		for (int j = 0; j < 3; j++)
+		{
+			Vertex vertex;
+			int vertexIndex = currentFace.GetVertexIndex(j) - 1;
+
+			vertex.position = vertices[vertexIndex];
+			vertex.normal = normals[vertexIndex];
+
+			if (textureCoords.size() > 0)
+			{
+				int textureCoordsIndex = currentFace.GetTextureIndex(j) - 1;
+				vertex.textureCoords = textureCoords[textureCoordsIndex];
+			}
+
+			modelVertices.push_back(vertex);
+		}
+	}
+
+	// set bounding box coords
 	for (glm::vec3 vertex : vertices)
 	{
 		mins.x = std::fmin(mins.x, vertex.x);
@@ -31,21 +55,19 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 		maxs.y = std::fmax(maxs.y, vertex.y);
 		mins.z = std::fmin(mins.z, vertex.z);
 		maxs.z = std::fmax(maxs.z, vertex.z);
-		avg.x += vertex.x;
-		avg.y += vertex.y;
-		avg.z += vertex.z;
 	}
 
 	color = Utils::GenerateRandomColor();
-	color2 = Utils::GenerateRandomColor();
-	avg /= glm::vec3(vertices.size());
 	location = translation;
+
+	InitOpenGL();
 }
 
-MeshModel::MeshModel(const MeshModel& other):
+MeshModel::MeshModel(const MeshModel& other) :
 	vertices(other.vertices),
 	faces(other.faces),
 	normals(other.normals),
+	textureCoords(other.textureCoords),
 	modelName(other.modelName),
 	worldTransform(other.worldTransform),
 	maxs(other.maxs),
@@ -56,15 +78,43 @@ MeshModel::MeshModel(const MeshModel& other):
 	showFacesNormals(other.showFacesNormals),
 	showVertexNormals(other.showVertexNormals),
 	showBoundingBox(other.showBoundingBox),
-	uniformMaterial(other.uniformMaterial),
 	color(other.color),
-	color2(other.color2)
+	modelVertices(other.modelVertices),
+	vao(other.vao),
+	vbo(other.vbo)
 {
+	InitOpenGL();
 }
 
 MeshModel::~MeshModel()
 {
+	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(1, &vbo);
+}
 
+void MeshModel::InitOpenGL() {
+	//GL stuff
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, modelVertices.size() * sizeof(Vertex), &modelVertices[0], GL_STATIC_DRAW);
+
+	// load vertex positions
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
+	glEnableVertexAttribArray(0);
+
+	// load normals
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, normal));
+	glEnableVertexAttribArray(1);
+
+	// load textures
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, textureCoords));
+	glEnableVertexAttribArray(2);
+
+	// unbind
+	glBindVertexArray(0);
 }
 
 void MeshModel::SetWorldTransformation(const glm::mat4x4& worldTransform)
@@ -155,3 +205,12 @@ void MeshModel::SetTranslation(glm::vec3 _translation) {
 	translation = _translation;
 }
 
+GLuint MeshModel::GetVAO() const
+{
+	return vao;
+}
+
+const std::vector<Vertex>& MeshModel::GetModelVertices()
+{
+	return modelVertices;
+}

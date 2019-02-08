@@ -61,6 +61,6 @@ public:
 	void SetZoom(const float zoom);
 
 	// Add more methods/functionality as needed...
-	glm::mat4 GetViewTransformation();
-	glm::mat4 GetProjTransformation();
+	glm::mat4 GetViewTransformation() const;
+	glm::mat4 GetProjTransformation() const;
 };

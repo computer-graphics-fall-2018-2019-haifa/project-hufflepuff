@@ -6,7 +6,11 @@
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <time.h>
+#include <nfd.h>
 #include <stdlib.h>
+#include <memory>
+#include <string>
+#include <sstream>
 
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -17,15 +21,16 @@
 #include "Scene.h"
 #include "Camera.h"
 #include "ImguiMenus.h"
+#include "Light.h"
 #include "Utils.h"
 
-float scale = 1.0f;
-float rotation = 0.0f;
-float translationVector[2] = { 0.0, 0.0 };
-Renderer* r;
 
+int windowWidth = 1280, windowHeight = 720;
+Renderer* r;
+Scene* s;
 // Function declarations
 static void GlfwErrorCallback(int error, const char* description);
+void glfw_OnFramebufferSize(GLFWwindow* window, int width, int height);
 GLFWwindow* SetupGlfwWindow(int w, int h, const char* window_name);
 ImGuiIO& SetupDearImgui(GLFWwindow* window);
 void StartFrame();
@@ -40,42 +45,43 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	// Handle mouse scrolling here...
 }
 
-void window_size_callback(GLFWwindow* window, int width, int height) {
-	(*r).SetViewport(width, height);
-}
-
 int main(int argc, char **argv)
 {
 	// Create GLFW window
-	int windowWidth = 1280, windowHeight = 720;
-
 	GLFWwindow* window = SetupGlfwWindow(windowWidth, windowHeight, "Mesh Viewer");
 	if (!window)
 	{
 		return 1;
 	}
 
+	glm::vec4 clearColor = GetClearColor();
+	glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+	glEnable(GL_DEPTH_TEST);
+
 	srand(static_cast <unsigned> (time(0)));
 
 	// Move OpenGL context to the newly created window
-	glfwMakeContextCurrent(window);
+	glfwMakeContextCurrent(window);	
 
 	// Get the current width/height of the frame buffer
 	int frameBufferWidth, frameBufferHeight;
 	glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
 
 	// Create the renderer and the scene
-
-	Renderer renderer = Renderer(frameBufferWidth, frameBufferHeight);
+	Renderer renderer(frameBufferWidth, frameBufferHeight);
 	r = &renderer;
+	renderer.LoadShaders();
+	renderer.LoadTextures();
+
 	Scene scene = Scene();
-
-	glfwSetWindowSizeCallback(window, window_size_callback);
-
-	Camera *c = new Camera(glm::vec3(350), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+	s = &scene;
+	Camera *c = new Camera(glm::vec3(10), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
 	scene.AddCamera(c);
 	Light *l = new Light();
 	scene.AddLight(l);
+
+	// Setup window events callbacks
+	glfwSetFramebufferSizeCallback(window, glfw_OnFramebufferSize);
 
 	// Setup ImGui
 	ImGuiIO& io = SetupDearImgui(window);
@@ -104,6 +110,14 @@ int main(int argc, char **argv)
 static void GlfwErrorCallback(int error, const char* description)
 {
 	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
+void glfw_OnFramebufferSize(GLFWwindow* window, int width, int height)
+{
+	windowWidth = width;
+	windowHeight = height;
+	glViewport(0, 0, windowWidth, windowHeight);
+	s->GetActiveCamera().aspectRatio = width / height;
 }
 
 GLFWwindow* SetupGlfwWindow(int w, int h, const char* window_name)
@@ -159,16 +173,11 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 	int frameBufferWidth, frameBufferHeight;
 	glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
 
-	// Resize handling here... (a suggestion)
-
-	// Clear the frame buffer
-	renderer.ClearColorBuffer(GetClearColor());
+	// Clear the screen and depth buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Render the scene
 	renderer.Render(scene);
-
-	// Swap buffers
-	renderer.SwapBuffers();
 
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	glfwSwapBuffers(window);

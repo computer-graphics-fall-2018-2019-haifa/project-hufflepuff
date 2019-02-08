@@ -47,6 +47,7 @@ public:
 	static std::vector<glm::vec3> FaceToNormals(const Face& face, const std::vector<glm::vec3>& normals);
 
 	static glm::vec4 GenerateRandomColor();
+	static std::vector<glm::vec3> CalculateNormals(std::vector<glm::vec3> vertices, std::vector<Face> faces);
 
 private:
 	static std::string GetFileName(const std::string& filePath);
