@@ -57,7 +57,6 @@ void Scene::AddCamera(Camera* camera)
 	activeCameraIndex = GetCameraCount();
 	cameras.push_back(camera);
 	camera->SetModelName("camera" + std::to_string(activeCameraIndex));
-	camera->scale = glm::vec3(15);
 
 	//float theta = glm::angle(camera->at, camera->eye);
 	//camera->rotation = glm::vec3(0);

@@ -9,7 +9,7 @@
 
 Camera::Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up) :
 	zoom(1.0), MeshModel(Utils::LoadMeshModel("..\\Data\\camera.obj")), projectionTransformation(glm::mat4(1)),
-	eye(eye), at(at), up(up), isOrth(1), fovy(45), height(2.5f), aspectRatio(1), n(75), f(100),
+	eye(eye), at(at), up(up), isOrth(1), fovy(45), height(2.5f), aspectRatio(1), n(0.1), f(100),
 	t(1.25f), b(-1.25f), l(-1.25f), r(1.25f), isAspect(true)
 {
 	SetCameraLookAt(this->eye, this->at, this->up);
@@ -34,38 +34,8 @@ void Camera::SetOrthographicProjection()
 void Camera::SetCameraLookAt(glm::vec3& eye, glm::vec3& at, glm::vec3& up)
 {
 	this->SetWorldTransformation();
-	//glm::mat4 translationMat = Utils::GetTranslationMatrix(translation);
-	//glm::mat4 rotationMat = Utils::GetRotationMatrix(rotation);
-	//glm::vec4 eye4 = Utils::Vec4FromVec3(eye);
-	//glm::vec4 at4 = Utils::Vec4FromVec3(at);
-	//glm::vec4 up4 = Utils::Vec4FromVec3(up);
-	//eye4 = rotationMat * eye4;
-	//at4 = translationMat /** rotationMatrix*/ * at4;
-	////up4 = rotationMatrix * up4;
-	//location = Utils::Vec3FromVec4(eye4);
-
-	//glm::vec4 zAxis4 = glm::normalize(eye4 - at4);
-	//glm::vec3 zAxis3 = Utils::Vec3FromVec4(zAxis4);
-	//glm::vec3 xAxis3 = glm::normalize(glm::cross(Utils::Vec3FromVec4(up4), zAxis3));
-	//glm::vec3 yAxis3 = glm::normalize(glm::cross(zAxis3, xAxis3));
-
-	//glm::vec4 xAxis4 = Utils::Vec4FromVec3(xAxis3, 0);
-	//glm::vec4 yAxis4 = Utils::Vec4FromVec3(yAxis3, 0);
-	//glm::vec4 t4 = glm::vec4(0.0, 0.0, 0.0, 1.0);
-	//zAxis4 = glm::vec4(zAxis3, 0);
-
-	//glm::mat4 c(
-	//	xAxis4,
-	//	yAxis4,
-	//	zAxis4,
-	//	t4
-	//);
-	//c = glm::transpose(c);
-	//glm::mat4 identity(1);
-	//identity[3] -= eye4 - glm::vec4(0, 0, 0, 1);
-
-	//this->viewTransformation = c * identity * Utils::GetScaleMatrix(glm::vec3(zoom));
 	this->viewTransformation = glm::lookAt(eye, at, up);
+
 }
 
 void Camera::SetWorldTransformation(const glm::mat4x4& worldTransform)
@@ -75,6 +45,8 @@ void Camera::SetWorldTransformation(const glm::mat4x4& worldTransform)
 
 void Camera::SetWorldTransformation() {
 	MeshModel::SetWorldTransformation();
+	glm::mat4 invMat = glm::inverse(this->GetWorldTransformation());
+	this->SetWorldTransformation(invMat);
 }
 
 void Camera::SetOrthographicProjection(
@@ -105,14 +77,16 @@ void Camera::SetPerspectiveProjection(
 {
 	float nearHeight = (_far - _near) * tan(_fovy * PI);
 	float nearWidth = _aspectRatio * nearHeight;
+	fovy = glm::min(_fovy, glm::degrees(glm::pi<float>()));
+
 	if (isAspect) {
 		t = 0.5 * nearHeight;
 		b = -0.5 * nearHeight;
 		l = -0.5 * nearWidth;
 		r = 0.5 * nearWidth;
 	}
-
-	this->projectionTransformation = glm::perspective(_fovy, _aspectRatio, _near, _far);
+	
+	this->projectionTransformation = glm::perspective(fovy, _aspectRatio, _near, _far);
 }
 
 void Camera::SetZoom(const float zoom)

@@ -27,18 +27,18 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 {
 	// set a list of model vertices
 	modelVertices.reserve(3 * faces.size());
-	for (Face currentFace : faces) {
+	for (Face face : faces) {
 		for (int j = 0; j < 3; j++)
 		{
 			Vertex vertex;
-			int vertexIndex = currentFace.GetVertexIndex(j) - 1;
+			int vertexIndex = face.GetVertexIndex(j) - 1;
 
 			vertex.position = vertices[vertexIndex];
 			vertex.normal = normals[vertexIndex];
 
 			if (textureCoords.size() > 0)
 			{
-				int textureCoordsIndex = currentFace.GetTextureIndex(j) - 1;
+				int textureCoordsIndex = face.GetTextureIndex(j) - 1;
 				vertex.textureCoords = textureCoords[textureCoordsIndex];
 			}
 
@@ -79,9 +79,7 @@ MeshModel::MeshModel(const MeshModel& other) :
 	showVertexNormals(other.showVertexNormals),
 	showBoundingBox(other.showBoundingBox),
 	color(other.color),
-	modelVertices(other.modelVertices),
-	vao(other.vao),
-	vbo(other.vbo)
+	modelVertices(other.modelVertices)
 {
 	InitOpenGL();
 }
@@ -95,23 +93,23 @@ MeshModel::~MeshModel()
 void MeshModel::InitOpenGL() {
 	//GL stuff
 	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-
 	glBindVertexArray(vao);
+
+	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, modelVertices.size() * sizeof(Vertex), &modelVertices[0], GL_STATIC_DRAW);
 
 	// load vertex positions
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
 	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
 
 	// load normals
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, normal));
 	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, normal));
 
 	// load textures
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, textureCoords));
 	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, textureCoords));
 
 	// unbind
 	glBindVertexArray(0);

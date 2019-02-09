@@ -17,8 +17,6 @@ typedef glm::vec3 vec3;
 class Renderer
 {
 private:
-	float *colorBuffer;
-	float *zBuffer;
 	int viewportWidth;
 	int viewportHeight;
 	int viewportX;
@@ -50,16 +48,12 @@ public:
 	bool fogActivated;
 	glm::vec3 fogColor;
 
-	Renderer(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
+	Renderer();
 	~Renderer();
 
-	void DrawModel(const Scene & scene, MeshModel* model, glm::mat4 transMat);
+	void DrawModel(const Scene & scene, MeshModel* model);
 
 	void Render(const Scene& scene);
-	/*void SwapBuffers();
-	void ClearColorBuffer(const glm::vec3& color);*/
-	/*void SetViewport(int viewportWidth, int viewportHeight, int viewportX = 0, int viewportY = 0);
-	void SetViewport();*/
 
 	void LoadShaders();
 	void LoadTextures();

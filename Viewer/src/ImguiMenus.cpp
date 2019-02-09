@@ -102,9 +102,9 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 					activeModel->SetScale({ x, x, x });
 				}
 				else {
-					ImGui::SliderFloat("Scale X", &(activeModel->scale.x), 1.0f, 200.0f);
-					ImGui::SliderFloat("Scale Y", &(activeModel->scale.y), 1.0f, 200.0f);
-					ImGui::SliderFloat("Scale Z", &(activeModel->scale.z), 1.0f, 200.0f);
+					ImGui::SliderFloat("Scale X", &(activeModel->scale.x), 0.0f, 1.0f);
+					ImGui::SliderFloat("Scale Y", &(activeModel->scale.y), 0.0f, 1.0f);
+					ImGui::SliderFloat("Scale Z", &(activeModel->scale.z), 0.0f, 1.0f);
 				}
 
 				ImGui::Separator();
@@ -125,14 +125,14 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 				ImGui::Text("Translate");
 				ImGui::Checkbox("Lock translation", &lockTranslation);
 				if (lockTranslation) {
-					ImGui::SliderFloat("Trans. all", &(activeModel->translation.x), -400.0f, 400.0f);
+					ImGui::SliderFloat("Trans. all", &(activeModel->translation.x), -1.0f, 1.0f);
 					float x = activeModel->translation.x;
 					activeModel->SetTranslation({ x, x, x });
 				}
 				else {
-					ImGui::SliderFloat("Around X", &(activeModel->translation.x), -400.0f, 400.0f);
-					ImGui::SliderFloat("Around Y", &(activeModel->translation.y), -400.0f, 400.0f);
-					ImGui::SliderFloat("Around Z", &(activeModel->translation.z), -400.0f, 400.0f);
+					ImGui::SliderFloat("Around X", &(activeModel->translation.x), -1.0f, 1.0f);
+					ImGui::SliderFloat("Around Y", &(activeModel->translation.y), -1.0f, 1.0f);
+					ImGui::SliderFloat("Around Z", &(activeModel->translation.z), -1.0f, 1.0f);
 				}
 			}
 			else {

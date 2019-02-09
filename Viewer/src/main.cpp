@@ -28,6 +28,7 @@
 int windowWidth = 1280, windowHeight = 720;
 Renderer* r;
 Scene* s;
+
 // Function declarations
 static void GlfwErrorCallback(int error, const char* description);
 void glfw_OnFramebufferSize(GLFWwindow* window, int width, int height);
@@ -47,6 +48,9 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 
 int main(int argc, char **argv)
 {
+	// initialize rand
+	srand(static_cast <unsigned> (time(0)));
+
 	// Create GLFW window
 	GLFWwindow* window = SetupGlfwWindow(windowWidth, windowHeight, "Mesh Viewer");
 	if (!window)
@@ -54,40 +58,36 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	glm::vec4 clearColor = GetClearColor();
-	glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-	glEnable(GL_DEPTH_TEST);
-
-	srand(static_cast <unsigned> (time(0)));
-
 	// Move OpenGL context to the newly created window
-	glfwMakeContextCurrent(window);	
-
-	// Get the current width/height of the frame buffer
-	int frameBufferWidth, frameBufferHeight;
-	glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
+	glfwMakeContextCurrent(window);
 
 	// Create the renderer and the scene
-	Renderer renderer(frameBufferWidth, frameBufferHeight);
+	Renderer renderer;
+	Scene scene;
+
 	r = &renderer;
+	s = &scene;
+
 	renderer.LoadShaders();
 	renderer.LoadTextures();
 
-	Scene scene = Scene();
-	s = &scene;
-	Camera *c = new Camera(glm::vec3(10), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+	Camera *c = new Camera(glm::vec3(5), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
 	scene.AddCamera(c);
 	Light *l = new Light();
 	scene.AddLight(l);
-
-	// Setup window events callbacks
-	glfwSetFramebufferSizeCallback(window, glfw_OnFramebufferSize);
 
 	// Setup ImGui
 	ImGuiIO& io = SetupDearImgui(window);
 
 	// Register a mouse scroll-wheel callback
 	glfwSetScrollCallback(window, ScrollCallback);
+
+	// Setup window events callbacks
+	glfwSetFramebufferSizeCallback(window, glfw_OnFramebufferSize);
+
+	//openGL things
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	// This is the main game loop..
     while (!glfwWindowShouldClose(window))
@@ -123,8 +123,10 @@ void glfw_OnFramebufferSize(GLFWwindow* window, int width, int height)
 GLFWwindow* SetupGlfwWindow(int w, int h, const char* window_name)
 {
 	glfwSetErrorCallback(GlfwErrorCallback);
+
 	if (!glfwInit())
 		return NULL;
+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -152,7 +154,6 @@ ImGuiIO& SetupDearImgui(GLFWwindow* window)
 
 	// Setup style
 	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsClassic();
 
 	return io;
 }
@@ -169,9 +170,11 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 	// Render the menus
 	ImGui::Render();
 
-	// That's how you get the current width/height of the frame buffer (for example, after the window was resized)
-	int frameBufferWidth, frameBufferHeight;
-	glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
+	glfwMakeContextCurrent(window);
+
+	glm::vec4 clearColor = GetClearColor();
+	glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+	glEnable(GL_DEPTH_TEST);
 
 	// Clear the screen and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
