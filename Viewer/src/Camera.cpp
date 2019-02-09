@@ -91,11 +91,16 @@ void Camera::SetPerspectiveProjection(
 
 void Camera::SetZoom(const float zoom)
 {
-
+	if (this->isOrth) {
+		this->SetOrthographicProjection(fovy * zoom, aspectRatio, n, f);
+	}
+	else {
+		float val = glm::min(fovy * zoom, glm::pi<float>());
+		this->SetPerspectiveProjection(val, aspectRatio, n, f);
+	}
 }
 
-glm::mat4 Camera::GetViewTransformation() const
-{
+glm::mat4 Camera::GetViewTransformation() const {
 	return this->viewTransformation;
 }
 

@@ -34,6 +34,10 @@ public:
 	glm::vec4 color;
 	glm::vec4 mins;
 	glm::vec4 maxs;
+	float Ka;
+	float Kd;
+	float Ks;
+	int alpha;
 
 	GLuint vao; // vertex array object
 	GLuint vbo; // vertex buffers object

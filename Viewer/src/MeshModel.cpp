@@ -23,7 +23,11 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 	showVertexNormals(false),
 	showBoundingBox(false),
 	vao(1),
-	vbo(1)
+	vbo(1),
+	Ka(0.5f),
+	Kd(0.7f),
+	Ks(0.2f),
+	alpha(3.0f)
 {
 	// set a list of model vertices
 	modelVertices.reserve(3 * faces.size());
@@ -79,7 +83,11 @@ MeshModel::MeshModel(const MeshModel& other) :
 	showVertexNormals(other.showVertexNormals),
 	showBoundingBox(other.showBoundingBox),
 	color(other.color),
-	modelVertices(other.modelVertices)
+	modelVertices(other.modelVertices),
+	Ka(other.Ka),
+	Kd(other.Kd),
+	Ks(other.Ks),
+	alpha(other.alpha)
 {
 	InitOpenGL();
 }

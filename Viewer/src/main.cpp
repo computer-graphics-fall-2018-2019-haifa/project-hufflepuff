@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 	renderer.LoadShaders();
 	renderer.LoadTextures();
 
-	Camera *c = new Camera(glm::vec3(5), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+	Camera *c = new Camera(glm::vec3(0,0,5), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
 	scene.AddCamera(c);
 	Light *l = new Light();
 	scene.AddLight(l);

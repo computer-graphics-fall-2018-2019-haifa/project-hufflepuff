@@ -164,6 +164,14 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 				}
 			}
 
+			ImGui::Separator();
+			ImGui::Text("Reflection:");
+			ImGui::SliderFloat("Ambient", &(activeModel->Ka), 0.0f, 1.0f);
+			ImGui::SliderFloat("Diffuse", &(activeModel->Kd), 0.0f, 1.0f);
+			ImGui::SliderFloat("Specular", &(activeModel->Ks), 0.0f, 1.0f);
+			ImGui::Text("Specular option:");
+			ImGui::SliderInt("Alpha", &(activeModel->alpha), 1, 500);
+
 			activeModel->SetWorldTransformation();
 			scene.SetWorldTransformation();
 
@@ -199,43 +207,21 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 				ImGui::SliderFloat("Rotate.c Z", &(activeCamera->rotation.z), 0.0f, 360.0f);
 			}
 			else {
-				ImGui::SliderFloat("Trans.c X", &(activeCamera->eye.x), -1000.0f, 1000.0f);
-				ImGui::SliderFloat("Trans.c Y", &(activeCamera->eye.y), -1000.0f, 1000.0f);
-				ImGui::SliderFloat("Trans.c Z", &(activeCamera->eye.z), -1000.0f, 1000.0f);
+				ImGui::SliderFloat("Trans.c X", &(activeCamera->eye.x), -20.0f, 20.0f);
+				ImGui::SliderFloat("Trans.c Y", &(activeCamera->eye.y), -20.0f, 20.0f);
+				ImGui::SliderFloat("Trans.c Z", &(activeCamera->eye.z), -20.0f, 20.0f);
 			}
 
 			ImGui::Separator();
-			ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 1.0f, 3.0f);
+			ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 0.0f, 50.0f);
 			ImGui::Separator();
 			ImGui::RadioButton("Orthographic", &(activeCamera->isOrth), 1);
 			ImGui::RadioButton("Perspective", &(activeCamera->isOrth), 0);
-
-			if (activeCamera->isOrth) {
-				ImGui::SliderFloat("Height", &(activeCamera->height), 1.0f, 100.0f);
-			}
-			else {
-				ImGui::SliderFloat("Fovy", &(activeCamera->fovy), 0.0f, 180.0f);
-			}
-
-			ImGui::Checkbox("Aspect", &(activeCamera->isAspect));
-			if (activeCamera->isAspect) {
-				ImGui::SliderFloat("Aspect Ratio", &(activeCamera->aspectRatio), 0.1f, 2.0f);
-			}
-			else {
-				ImGui::SliderFloat("Top", &(activeCamera->t), 0.1f, 5.0f);
-				ImGui::SliderFloat("Bottom", &(activeCamera->b), -5.0f, -0.1f);
-				ImGui::SliderFloat("Right", &(activeCamera->r), 0.1f, 5.0f);
-				ImGui::SliderFloat("Left", &(activeCamera->l), -5.0f, -0.1f);
-				activeCamera->aspectRatio = (activeCamera->t - activeCamera->b);
-				activeCamera->aspectRatio /= (activeCamera->r - activeCamera->l);
-			}
-			ImGui::SliderFloat("Near", &(activeCamera->n), 10.0f, 100.0f);
+			ImGui::Separator();
+			ImGui::SliderFloat("Near", &(activeCamera->n), 0.0f, 99.0f);
 			ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
 
 			activeCamera->translation = activeCamera->eye;
-			//activeCamera->location = Utils::Mult(Utils::TransMatricesCamera(scene, activeCameraIndex), activeCamera->translation);
-			//activeCamera->SetWorldTransformation();
-			//scene.SetWorldTransformation();
 
 			delete[] cameraNames;
 		}
@@ -243,9 +229,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 		ImGui::Separator();
 		if (ImGui::CollapsingHeader("Lights") && lightsAmount > 0) {
 			Light* activeLight = lights.at(activeLightIndex);
-			if (ImGui::Button("Add Light")) {
-				Light *l = new Light();
-				scene.AddLight(l);
+			if (lights.size() < 5) {
+				if (ImGui::Button("Add Light")) {
+					Light *l = new Light();
+					scene.AddLight(l);
+				}
 			}
 
 			char** lightNames = new char*[lightsAmount];
@@ -258,10 +246,10 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			ImGui::Separator();
 			ImGui::ColorEdit3("Light color", (float*)&(activeLight->color));
 
-			ImGui::Separator();
+			/*ImGui::Separator();
 			ImGui::Text("Light type:");
 			ImGui::RadioButton("Point", &(activeLight->isPoint), 1);
-			ImGui::RadioButton("Parallel", &(activeLight->isPoint), 0);
+			ImGui::RadioButton("Parallel", &(activeLight->isPoint), 0);*/
 
 			ImGui::Separator();
 			//if (activeLight->isPoint) {
@@ -271,29 +259,12 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			ImGui::SliderFloat("Trans.l Z", &(activeLight->translation.z), -400.0f, 400.0f);
 			glm::vec3 point = activeLight->GetVertices()[0];
 			activeLight->location = Utils::Mult(activeLight->GetWorldTransformation() * scene.GetWorldTransformation(), point);
-			//}
-			/*else {
-				ImGui::Text("Rotate Light");
-				ImGui::SliderFloat("Rotate.l X", &(activeLight->rotation.x), 0.0f, 360.0f);
-				ImGui::SliderFloat("Rotate.l Y", &(activeLight->rotation.y), 0.0f, 360.0f);
-				ImGui::SliderFloat("Rotate.l Z", &(activeLight->rotation.z), 0.0f, 360.0f);
-				glm::vec3 point = activeLight->GetVertices()[0];
-				activeLight->location = Utils::Mult(Utils::GetRotationMatrix(activeLight->rotation) * Utils::TransMatricesLight(scene, activeLightIndex), point);
-			}*/
-
-			ImGui::Separator();
-			ImGui::Text("Reflection:");
-			ImGui::SliderFloat("Ambient",  &(activeLight->Ka), 0.0f, 1.0f);
-			ImGui::SliderFloat("Diffuse",  &(activeLight->Kd), 0.0f, 1.0f);
-			ImGui::SliderFloat("Specular", &(activeLight->Ks), 0.0f, 1.0f);
-			ImGui::Text("Specular option:");
-			ImGui::SliderInt("Alpha", &(activeLight->shineOn), 1, 500);
 
 			delete[] lightNames;
 		}
 		else {
 			glm::vec3 point = activeLight->GetVertices()[0];
-			activeLight->location = Utils::Mult(Utils::TransMatricesLight(scene, activeLightIndex), point);
+			activeLight->location = Utils::Mult(activeLight->GetWorldTransformation() * scene.GetWorldTransformation(), point);
 		}
 		
 		ImGui::Separator();
@@ -301,23 +272,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			if (ImGui::ColorEdit3("BG color", (float*)&clearColor)) {
 				glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
 			}
-			ImGui::Separator();
-			/*if (ImGui::Button("Toggle anti-aliasing")) {
-				renderer.alias = !renderer.alias;
-				renderer.SetViewport();
-				activeCamera->zoom *= renderer.alias ? 2 : 0.5;
-			}*/
 
-			ImGui::Separator();
+			/*ImGui::Separator();
 			ImGui::Text("Shading method:");
-			ImGui::RadioButton("Flat", &(scene.shadingType), 0);
 			ImGui::RadioButton("Gouraud", &(scene.shadingType), 1);
-			ImGui::RadioButton("Phong", &(scene.shadingType), 2);
-
-			ImGui::Separator();
-			ImGui::Checkbox("Activate fog", &(renderer.fogActivated));
-			if (renderer.fogActivated)
-				ImGui::ColorEdit3("Fog color", (float*)&(renderer.fogColor));
+			ImGui::RadioButton("Phong", &(scene.shadingType), 2);*/
 		}
 
 		// update stuff.

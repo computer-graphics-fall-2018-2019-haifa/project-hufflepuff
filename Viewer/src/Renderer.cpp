@@ -11,16 +11,9 @@
 #include <math.h>
 #include <algorithm>
 
-#define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
-#define ZINDEX(w,x,y) ((x)+(y*w))
 #define FLAT 0
 #define GOURAUD 1
 #define PHONG 2
-
-const double VERYBIG = std::numeric_limits<float>::max();
-typedef glm::vec3 vec3;
-int x_add;
-int y_add;
 
 Renderer::Renderer() :
 	fogActivated(false),
@@ -40,7 +33,11 @@ void Renderer::DrawModel(const Scene& scene, MeshModel* model) {
 	// Set the uniform variables
 	colorShader.setUniform("model", modelMat);
 	colorShader.setUniform("material.textureMap", 0);
-	colorShader.setUniform("material.ambient", model->color);
+	colorShader.setUniform("material.color", model->color);
+	colorShader.setUniform("material.Ka", model->Ka);
+	colorShader.setUniform("material.Kd", model->Kd);
+	colorShader.setUniform("material.Ks", model->Ks);
+	colorShader.setUniform("material.alpha", model->alpha);
 
 	// Set 'texture1' as the active texture at slot #0
 	texture1.bind(0);
@@ -75,18 +72,31 @@ void Renderer::Render(const Scene& scene)
 	glm::mat4 viewMat = activeCamera.GetViewTransformation();
 	glm::mat4 objMat = activeCamera.GetWorldTransformation();
 	glm::mat4 projMat = activeCamera.GetProjTransformation();
+	glm::vec4 lightColors[5] = { glm::vec4(0) };
+	glm::vec4 lightLocations[5] = { glm::vec4(0) };
+
+	for (int i = 0; i < 5; i++) {
+		if (i < lights.size()) {
+			Light* light = lights.at(i);
+			lightColors[i] = light->color;
+			lightLocations[i] = glm::vec4(light->location, 1);
+		}
+	}
 	
-	// pass parameters to color shader
 	colorShader.use();
+
+	// camera params
 	colorShader.setUniform("view", viewMat * objMat);
 	colorShader.setUniform("projection", projMat);
+	colorShader.setUniform("lightColors", lightColors);
+	colorShader.setUniform("lightLocations", lightLocations);
 	
 	// draw models
 	for (std::shared_ptr<MeshModel> model : models) {
 		model->SetWorldTransformation();
 		DrawModel(scene, &(*model));
 	}
-
+	/*
 	// draw cameras
 	for (int i = 0; i < scene.GetCameraCount(); i++) {
 		if (scene.GetActiveCameraIndex() == i)
@@ -101,7 +111,7 @@ void Renderer::Render(const Scene& scene)
 		MeshModel* model = lights.at(i);
 		model->SetWorldTransformation();
 		DrawModel(scene, &(*model));
-	}
+	}*/
 }
 
 //void Renderer::DrawSquare(vec3 vertices[4], vec3 color) {
@@ -225,7 +235,7 @@ void Renderer::Render(const Scene& scene)
 //		}
 //	}
 //}
-//
+
 
 void Renderer::LoadShaders()
 {
