@@ -5,6 +5,7 @@
 #include <memory>
 #include "MeshModel.h"
 #include "Face.h"
+#include "Texture2D.h"
 
 struct Vertex
 {
@@ -22,11 +23,14 @@ private:
 	std::vector<Vertex> modelVertices;
 	glm::mat4x4 worldTransform;
 	std::string modelName;
+	Texture2D texture;
 
 public:
 	bool showVertexNormals;
 	bool showFacesNormals;
 	bool showBoundingBox;
+	bool fill;
+	bool showWire;
 	glm::vec3 scale;
 	glm::vec3 rotation;
 	glm::vec3 translation;
@@ -38,6 +42,7 @@ public:
 	float Kd;
 	float Ks;
 	int alpha;
+	bool useTexture;
 
 	GLuint vao; // vertex array object
 	GLuint vbo; // vertex buffers object
@@ -77,4 +82,8 @@ public:
 
 	GLuint GetVAO() const;
 	const std::vector<Vertex>& GetModelVertices();
+
+	void LoadTexture(const char * path);
+	void BindTexture();
+	void UnbindTexture();
 };

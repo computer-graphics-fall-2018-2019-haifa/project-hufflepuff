@@ -14,6 +14,7 @@ struct Material
 uniform Material material;
 uniform vec4 lightLocations[5];
 uniform vec4 lightColors[5];
+uniform bool useTexture;
 
 in vec4 fragPos;
 in vec4 fragNormal;
@@ -24,31 +25,37 @@ out vec4 fragColor;
 void main()
 {
 	// Sample the texture-map at the UV coordinates given by 'fragTexCoords'
-	//vec3 textureColor = vec3(texture(material.textureMap, fragTexCoords));
+	vec4 materialColor = material.color;
 
-	vec4 N = normalize(fragNormal);
-	vec4 V = normalize(fragPos);
+	if (useTexture) {
+		vec3 textureColor = vec3(texture(material.textureMap, fragTexCoords));
+		materialColor = vec4(textureColor, 1.0f);
+	}
 
-	vec4 IA = material.Ka * material.color;
+	vec3 N = normalize(fragNormal.xyz / fragNormal.w);
+	vec3 V = normalize(fragPos.xyz / fragPos.w);
+
+	vec4 IA = material.Ka * materialColor;
 	vec4 ID = vec4(0.0f);
 	vec4 IS = vec4(0.0f);
 
 	for (int i = 0; i < 5; i++) {
 		vec4 lightColor = lightColors[i];
-		vec4 lightLocation = lightLocations[i];
-		vec4 L = normalize(lightLocation - fragPos);
-		vec4 R = normalize(reflect(-L, N));
-		float LN = max(dot(N, L), 0.0f);
-		float RV = pow(max(dot(R, V), 0.0f), material.alpha);
+		vec3 lightLocation = lightLocations[i].xyz / lightLocations[i].w;
 
-		vec4 diffuseColor = material.Kd * LN * lightColor;
+		vec3 L = normalize(lightLocation - (fragPos.xyz / fragPos.w));
+		vec3 R = normalize(reflect(-L, N));
+		float diff = max(dot(N, L), 0.0f);
+		float spec = pow(max(dot(R, V), 0.0f), material.alpha);
+
+		vec4 diffuseColor = material.Kd * diff * lightColor;
 		ID = ID + diffuseColor;
 
-		vec4 specularColor = material.Ks * RV * lightColor;
+		vec4 specularColor = material.Ks * spec * lightColor;
 		IS = IS + specularColor;
 	}
 
 	vec4 illumination = IA + ID + IS;
 
-	fragColor = clamp(illumination * material.color, 0.0f, 1.0f);
+	fragColor = clamp(illumination * materialColor, 0.0f, 1.0f);
 }

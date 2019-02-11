@@ -22,12 +22,15 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 	showFacesNormals(false),
 	showVertexNormals(false),
 	showBoundingBox(false),
+	showWire(false),
+	fill(true),
 	vao(1),
 	vbo(1),
 	Ka(0.5f),
 	Kd(0.7f),
 	Ks(0.2f),
-	alpha(3.0f)
+	alpha(3.0f),
+	useTexture(false)
 {
 	// set a list of model vertices
 	modelVertices.reserve(3 * faces.size());
@@ -44,6 +47,9 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 			{
 				int textureCoordsIndex = face.GetTextureIndex(j) - 1;
 				vertex.textureCoords = textureCoords[textureCoordsIndex];
+			}
+			else {
+				vertex.textureCoords = glm::vec2(vertex.position);
 			}
 
 			modelVertices.push_back(vertex);
@@ -82,12 +88,16 @@ MeshModel::MeshModel(const MeshModel& other) :
 	showFacesNormals(other.showFacesNormals),
 	showVertexNormals(other.showVertexNormals),
 	showBoundingBox(other.showBoundingBox),
+	showWire(other.showWire),
+	fill(other.fill),
 	color(other.color),
 	modelVertices(other.modelVertices),
 	Ka(other.Ka),
 	Kd(other.Kd),
 	Ks(other.Ks),
-	alpha(other.alpha)
+	alpha(other.alpha),
+	useTexture(other.useTexture),
+	texture(other.texture)
 {
 	InitOpenGL();
 }
@@ -219,4 +229,17 @@ GLuint MeshModel::GetVAO() const
 const std::vector<Vertex>& MeshModel::GetModelVertices()
 {
 	return modelVertices;
+}
+
+void MeshModel::LoadTexture(const char * path) {
+	texture.loadTexture(path, true);
+}
+
+void MeshModel::BindTexture() {
+	texture.bind(0);
+}
+
+void MeshModel::UnbindTexture()
+{
+	texture.unbind(0);
 }

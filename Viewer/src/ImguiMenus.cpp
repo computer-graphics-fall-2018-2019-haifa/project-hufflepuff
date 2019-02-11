@@ -72,21 +72,23 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			for (int i = 0; i < modelsAmount; i++)
 				modelNames[i] = const_cast<char*>((*models[i]).GetModelName().c_str());
 
+
 			ImGui::Combo("Select Model", &scene.activeModelIndex, modelNames, modelsAmount);
 			
 			ImGui::Text("Active Model Preferences");
-			ImGui::SameLine();
-			if (ImGui::Button("Focus")) {
-				glm::mat4 worldTransform = activeModel->GetWorldTransformation();
-				activeCamera->at = activeModel->translation;
-				activeCamera->SetCameraLookAt();
-			}
-			
+
+			ImGui::Separator();
+			ImGui::Checkbox("Use Texture", &(activeModel->useTexture));
+			ImGui::Checkbox("Fill", &(activeModel->fill));
+			ImGui::Checkbox("Show Wire", &(activeModel->showWire));
+
+			if (!activeModel->useTexture)
+				ImGui::ColorEdit3("Color", (float*)&(activeModel->color));
+
+			ImGui::Separator();
 			ImGui::Checkbox("Vertex Normals", &(activeModel->showVertexNormals));
 			ImGui::Checkbox("Face Normals", &(activeModel->showFacesNormals));
 			ImGui::Checkbox("Bouding Box", &(activeModel->showBoundingBox));
-
-			ImGui::ColorEdit3("Color", (float*)&(activeModel->color));
 
 			ImGui::Separator();
 			ImGui::Text("Control over:");
@@ -218,7 +220,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			ImGui::RadioButton("Orthographic", &(activeCamera->isOrth), 1);
 			ImGui::RadioButton("Perspective", &(activeCamera->isOrth), 0);
 			ImGui::Separator();
-			ImGui::SliderFloat("Near", &(activeCamera->n), 0.0f, 99.0f);
+			ImGui::SliderFloat("Near", &(activeCamera->n), 0.10f, 10.0f);
 			ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
 
 			activeCamera->translation = activeCamera->eye;
@@ -310,6 +312,26 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 					nfdresult_t result = NFD_OpenDialog("obj;png,jpg", NULL, &outPath);
 					if (result == NFD_OKAY) {
 						scene.AddModel(std::make_shared<MeshModel>(Utils::LoadMeshModel(outPath)));
+						free(outPath);
+					}
+					else if (result == NFD_CANCEL) {
+					}
+					else {
+					}
+
+				}
+				ImGui::EndMenu();
+			}
+
+			if (scene.GetModelCount() > 0 && ImGui::BeginMenu("Textures"))
+			{
+				if (ImGui::MenuItem("Load Texture...", "CTRL+T")) {
+					nfdchar_t *outPath = NULL;
+					nfdresult_t result = NFD_OpenDialog("png,jpg", NULL, &outPath);
+					if (result == NFD_OKAY) {
+						std::vector<std::shared_ptr<MeshModel>> models = scene.GetModels();
+						std::shared_ptr<MeshModel> model = models.at(scene.GetActiveModelIndex());
+						model->LoadTexture(outPath);
 						free(outPath);
 					}
 					else if (result == NFD_CANCEL) {

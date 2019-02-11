@@ -32,30 +32,35 @@ void Renderer::DrawModel(const Scene& scene, MeshModel* model) {
 
 	// Set the uniform variables
 	colorShader.setUniform("model", modelMat);
-	colorShader.setUniform("material.textureMap", 0);
 	colorShader.setUniform("material.color", model->color);
 	colorShader.setUniform("material.Ka", model->Ka);
 	colorShader.setUniform("material.Kd", model->Kd);
 	colorShader.setUniform("material.Ks", model->Ks);
 	colorShader.setUniform("material.alpha", model->alpha);
+	colorShader.setUniform("useTexture", model->useTexture);
+	colorShader.setUniform("numColors", model->numColors);
 
-	// Set 'texture1' as the active texture at slot #0
-	texture1.bind(0);
+	if (model->fill) {
+		// Set the model's texture as the active texture at slot #0
+		model->BindTexture();
 
-	// Drag our model's faces (triangles) in fill mode
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glBindVertexArray(model->GetVAO());
-	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model->GetModelVertices().size());
-	glBindVertexArray(0);
+		// Drag our model's faces (triangles) in fill mode
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glBindVertexArray(model->GetVAO());
+		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model->GetModelVertices().size());
+		glBindVertexArray(0);
 
-	// Unset 'texture1' as the active texture at slot #0
-	texture1.unbind(0);
+		// Unset the model's texture as the active texture at slot #0
+		model->UnbindTexture();
+	}
 	
-	// Drag our model's faces (triangles) in line mode (wireframe)
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glBindVertexArray(model->GetVAO());
-	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model->GetModelVertices().size());
-	glBindVertexArray(0);
+	if (model->showWire) {
+		// Drag our model's faces (triangles) in line mode (wireframe)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glBindVertexArray(model->GetVAO());
+		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model->GetModelVertices().size());
+		glBindVertexArray(0);
+	}
 }
 
 void Renderer::Render(const Scene& scene)
@@ -96,12 +101,13 @@ void Renderer::Render(const Scene& scene)
 		model->SetWorldTransformation();
 		DrawModel(scene, &(*model));
 	}
-	/*
+	
 	// draw cameras
 	for (int i = 0; i < scene.GetCameraCount(); i++) {
 		if (scene.GetActiveCameraIndex() == i)
 			continue;
 		MeshModel* model = cameras.at(i);
+		model->scale = glm::vec3(0.1);
 		model->SetWorldTransformation();
 		DrawModel(scene, model);
 	}
@@ -109,9 +115,10 @@ void Renderer::Render(const Scene& scene)
 	// draw lights
 	for (int i = 0; i < scene.GetLightCount(); i++) {
 		MeshModel* model = lights.at(i);
+		model->scale = glm::vec3(0.1);
 		model->SetWorldTransformation();
 		DrawModel(scene, &(*model));
-	}*/
+	}
 }
 
 //void Renderer::DrawSquare(vec3 vertices[4], vec3 color) {
@@ -240,12 +247,4 @@ void Renderer::Render(const Scene& scene)
 void Renderer::LoadShaders()
 {
 	colorShader.loadShaders("vshader.glsl", "fshader.glsl");
-}
-
-void Renderer::LoadTextures()
-{
-	if (!texture1.loadTexture("bin\\Debug\\crate.jpg", true))
-	{
-		texture1.loadTexture("bin\\Release\\crate.jpg", true);
-	}
 }

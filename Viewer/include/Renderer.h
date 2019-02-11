@@ -28,7 +28,6 @@ private:
 
 	ShaderProgram lightShader;
 	ShaderProgram colorShader;
-	Texture2D texture1;
 
 	/*void putPixel(int x, int y, double z, const glm::vec3& color, bool test = true);
 	void createBuffers(int viewportWidth, int viewportHeight, glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f));
@@ -56,7 +55,6 @@ public:
 	void Render(const Scene& scene);
 
 	void LoadShaders();
-	void LoadTextures();
 	/*glm::vec3 centerPoint(glm::vec3 point);
 	glm::vec3 centerPoint(glm::vec4 point);
 	void DrawLine(const vec3& point1, const vec3& point2, const vec3& color);
