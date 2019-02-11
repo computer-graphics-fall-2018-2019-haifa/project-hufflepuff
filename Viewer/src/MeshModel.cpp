@@ -23,14 +23,15 @@ MeshModel::MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3
 	showVertexNormals(false),
 	showBoundingBox(false),
 	showWire(false),
+	useTexture(false),
+	loadedTexture(false),
 	fill(true),
 	vao(1),
 	vbo(1),
 	Ka(0.5f),
 	Kd(0.7f),
 	Ks(0.2f),
-	alpha(3.0f),
-	useTexture(false)
+	alpha(3.0f)
 {
 	// set a list of model vertices
 	modelVertices.reserve(3 * faces.size());
@@ -97,7 +98,8 @@ MeshModel::MeshModel(const MeshModel& other) :
 	Ks(other.Ks),
 	alpha(other.alpha),
 	useTexture(other.useTexture),
-	texture(other.texture)
+	texture(other.texture),
+	loadedTexture(other.loadedTexture)
 {
 	InitOpenGL();
 }
@@ -233,6 +235,7 @@ const std::vector<Vertex>& MeshModel::GetModelVertices()
 
 void MeshModel::LoadTexture(const char * path) {
 	texture.loadTexture(path, true);
+	loadedTexture = true;
 }
 
 void MeshModel::BindTexture() {

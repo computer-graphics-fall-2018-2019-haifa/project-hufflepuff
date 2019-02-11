@@ -78,7 +78,9 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			ImGui::Text("Active Model Preferences");
 
 			ImGui::Separator();
-			ImGui::Checkbox("Use Texture", &(activeModel->useTexture));
+			if (activeModel->loadedTexture)
+				ImGui::Checkbox("Use Texture", &(activeModel->useTexture));
+
 			ImGui::Checkbox("Fill", &(activeModel->fill));
 			ImGui::Checkbox("Show Wire", &(activeModel->showWire));
 
@@ -99,13 +101,13 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 				ImGui::Text("Scale");
 				ImGui::Checkbox("Lock scale", &lockScale);
 				if (lockScale) {
-					ImGui::SliderFloat("Scale all", &(activeModel->scale.x), 1.0f, 100.0f);
+					ImGui::SliderFloat("Scale all", &(activeModel->scale.x), 0.0f, 3.0f);
 					float x = activeModel->scale.x;
 					activeModel->SetScale({ x, x, x });
 				}
 				else {
-					ImGui::SliderFloat("Scale X", &(activeModel->scale.x), 0.0f, 1.0f);
-					ImGui::SliderFloat("Scale Y", &(activeModel->scale.y), 0.0f, 1.0f);
+					ImGui::SliderFloat("Scale X", &(activeModel->scale.x), 0.0f, 3.0f);
+					ImGui::SliderFloat("Scale Y", &(activeModel->scale.y), 0.0f, 3.0f);
 					ImGui::SliderFloat("Scale Z", &(activeModel->scale.z), 0.0f, 1.0f);
 				}
 

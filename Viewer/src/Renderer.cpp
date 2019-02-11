@@ -38,7 +38,6 @@ void Renderer::DrawModel(const Scene& scene, MeshModel* model) {
 	colorShader.setUniform("material.Ks", model->Ks);
 	colorShader.setUniform("material.alpha", model->alpha);
 	colorShader.setUniform("useTexture", model->useTexture);
-	colorShader.setUniform("numColors", model->numColors);
 
 	if (model->fill) {
 		// Set the model's texture as the active texture at slot #0

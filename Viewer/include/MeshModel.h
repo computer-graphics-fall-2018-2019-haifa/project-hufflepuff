@@ -31,6 +31,9 @@ public:
 	bool showBoundingBox;
 	bool fill;
 	bool showWire;
+	bool loadedTexture;
+	bool useTexture;
+
 	glm::vec3 scale;
 	glm::vec3 rotation;
 	glm::vec3 translation;
@@ -38,11 +41,11 @@ public:
 	glm::vec4 color;
 	glm::vec4 mins;
 	glm::vec4 maxs;
+	
 	float Ka;
 	float Kd;
 	float Ks;
 	int alpha;
-	bool useTexture;
 
 	GLuint vao; // vertex array object
 	GLuint vbo; // vertex buffers object
