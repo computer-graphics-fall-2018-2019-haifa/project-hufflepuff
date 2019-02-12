@@ -135,6 +135,11 @@ void MeshModel::InitOpenGL() {
 	glBindVertexArray(0);
 }
 
+void MeshModel::LoadBombingTexture() {
+	loadedTexture = true;
+	texture.genRandomTexture(true);
+}
+
 void MeshModel::SetWorldTransformation(const glm::mat4x4& worldTransform)
 {
 	this->worldTransform = worldTransform;

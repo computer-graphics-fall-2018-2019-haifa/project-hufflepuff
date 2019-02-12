@@ -57,6 +57,8 @@ public:
 
 	void InitOpenGL();
 
+	void LoadBombingTexture();
+
 	void SetWorldTransformation();
 	virtual void SetWorldTransformation(const glm::mat4x4& worldTransform);
 	void SetWorldTransformation(glm::vec3 scale, glm::vec3 rotate, glm::vec3 translate);

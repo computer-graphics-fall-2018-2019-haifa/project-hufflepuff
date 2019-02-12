@@ -78,6 +78,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			ImGui::Text("Active Model Preferences");
 
 			ImGui::Separator();
+			ImGui::Text("Textures");
+			if (ImGui::Button("Procedural texture")) {
+				activeModel->LoadBombingTexture();
+				activeModel->useTexture;
+			}
 			if (activeModel->loadedTexture)
 				ImGui::Checkbox("Use Texture", &(activeModel->useTexture));
 
