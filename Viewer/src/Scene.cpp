@@ -41,7 +41,7 @@ void Scene::AddLight(Light* light)
 	activeLightIndex = GetLightCount();
 	lights.push_back(light);
 	light->SetModelName("lightSource" + std::to_string(activeLightIndex));
-	light->scale = glm::vec3(0.5f);
+	light->scale = glm::vec3(0.1f);
 
 	/*float theta = glm::angle(camera->at, camera->eye);
 	camera->rotation = glm::vec3(theta);*/

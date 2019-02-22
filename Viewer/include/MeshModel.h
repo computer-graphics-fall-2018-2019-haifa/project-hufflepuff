@@ -14,6 +14,8 @@ struct Vertex
 	glm::vec2 textureCoords;
 };
 
+enum Proj { ORIGINAL, PLANAR, SPHERICAL, CYLINDRICAL };
+
 class MeshModel {
 private:
 	std::vector<Face> faces;
@@ -21,6 +23,8 @@ private:
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> textureCoords;
 	std::vector<Vertex> modelVertices;
+	std::vector<Vertex> boundingBoxVertices;
+	std::vector<Vertex> vertexNormals;
 	glm::mat4x4 worldTransform;
 	std::string modelName;
 	Texture2D texture;
@@ -41,6 +45,7 @@ public:
 	glm::vec4 color;
 	glm::vec4 mins;
 	glm::vec4 maxs;
+	glm::vec3 avg;
 	
 	float Ka;
 	float Kd;
@@ -49,15 +54,29 @@ public:
 
 	GLuint vao; // vertex array object
 	GLuint vbo; // vertex buffers object
+	GLuint boxVao;
+	GLuint boxVbo;
+	GLuint normalVao;
+	GLuint normalVbo;
 
 	MeshModel() {};
 	MeshModel(const std::vector<Face>& faces, const std::vector<glm::vec3>& vertices, const std::vector<glm::vec3>& normals, std::vector<glm::vec2> textureCoords, const std::string& modelName = "");
 	MeshModel(const MeshModel& other);
 	virtual ~MeshModel();
 
-	void InitOpenGL();
+	void InitOpenGL(GLuint* vao, GLuint* vbo, std::vector<Vertex>& vertices);
+
+	void UpdateModelVerticesData(std::vector<Vertex>& newVertices);
 
 	void LoadBombingTexture();
+
+	void ChangeTextureProjection(int type);
+
+	void PopulateBoundingBoxVertices();
+	void PopulateVertexNormals();
+
+	std::vector<Vertex>& GetBoundingBoxVertices();
+	std::vector<Vertex>& GetVertexNormals();
 
 	void SetWorldTransformation();
 	virtual void SetWorldTransformation(const glm::mat4x4& worldTransform);

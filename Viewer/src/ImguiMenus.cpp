@@ -53,6 +53,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 	{
 		static int counter = 0;
 		static int controlOverModel = 1;
+		static int textureProjection = 0;
 
 		Camera* activeCamera = cameras.at(activeCameraIndex);
 		Light* activeLight = lights.at(activeLightIndex);
@@ -79,22 +80,32 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 
 			ImGui::Separator();
 			ImGui::Text("Textures");
-			if (ImGui::Button("Procedural texture")) {
-				activeModel->LoadBombingTexture();
-				activeModel->useTexture;
-			}
 			if (activeModel->loadedTexture)
 				ImGui::Checkbox("Use Texture", &(activeModel->useTexture));
 
+			if (ImGui::Button("Procedural Texture")) {
+				activeModel->LoadBombingTexture();
+				activeModel->useTexture;
+			}
+
+			if (activeModel->useTexture) {
+				ImGui::Text("Texture Projection:");
+				ImGui::RadioButton("Original", &(textureProjection), 0);
+				ImGui::RadioButton("Planar", &(textureProjection), 1);
+				ImGui::RadioButton("Cylindrical", &(textureProjection), 3);
+
+				activeModel->ChangeTextureProjection(textureProjection);
+			}
+
+			ImGui::Separator();
 			ImGui::Checkbox("Fill", &(activeModel->fill));
 			ImGui::Checkbox("Show Wire", &(activeModel->showWire));
 
-			if (!activeModel->useTexture)
-				ImGui::ColorEdit3("Color", (float*)&(activeModel->color));
+			ImGui::Separator();
+			ImGui::ColorEdit3("Color", (float*)&(activeModel->color));
 
 			ImGui::Separator();
 			ImGui::Checkbox("Vertex Normals", &(activeModel->showVertexNormals));
-			ImGui::Checkbox("Face Normals", &(activeModel->showFacesNormals));
 			ImGui::Checkbox("Bouding Box", &(activeModel->showBoundingBox));
 
 			ImGui::Separator();
@@ -113,7 +124,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 				else {
 					ImGui::SliderFloat("Scale X", &(activeModel->scale.x), 0.0f, 3.0f);
 					ImGui::SliderFloat("Scale Y", &(activeModel->scale.y), 0.0f, 3.0f);
-					ImGui::SliderFloat("Scale Z", &(activeModel->scale.z), 0.0f, 1.0f);
+					ImGui::SliderFloat("Scale Z", &(activeModel->scale.z), 0.0f, 3.0f);
 				}
 
 				ImGui::Separator();
@@ -210,6 +221,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			ImGui::RadioButton("Rotate", &controlCam, 0);
 			ImGui::SameLine();
 			ImGui::RadioButton("Translate", &controlCam, 1);
+
 			if (controlCam == 0) {
 				ImGui::SliderFloat("Rotate.c X", &(activeCamera->rotation.x), 0.0f, 360.0f);
 				ImGui::SliderFloat("Rotate.c Y", &(activeCamera->rotation.y), 0.0f, 360.0f);
@@ -222,10 +234,20 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene, Renderer& renderer)
 			}
 
 			ImGui::Separator();
-			ImGui::SliderFloat("Zoom", &(activeCamera->zoom), 0.0f, 50.0f);
-			ImGui::Separator();
 			ImGui::RadioButton("Orthographic", &(activeCamera->isOrth), 1);
 			ImGui::RadioButton("Perspective", &(activeCamera->isOrth), 0);
+
+			ImGui::Separator();
+			ImGui::Text("Zoom");
+			ImGui::SameLine();
+			if (ImGui::ArrowButton("Zoom In", 2)) {
+				activeCamera->SetZoom(0.9f);
+			}
+			ImGui::SameLine();
+			if (ImGui::ArrowButton("Zoom Out", 3)) {
+				activeCamera->SetZoom(1.1f);
+			}
+
 			ImGui::Separator();
 			ImGui::SliderFloat("Near", &(activeCamera->n), 0.10f, 10.0f);
 			ImGui::SliderFloat("Far", &(activeCamera->f), 100.0f, 1000.0f);
